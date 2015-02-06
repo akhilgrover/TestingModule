@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/BackTestModule/!svn/ver/2/trunk/bin
+END
+manifest.mf
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/BackTestModule/!svn/ver/2/trunk/bin/manifest.mf
+END
+build.xml
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/BackTestModule/!svn/ver/2/trunk/bin/build.xml
+END

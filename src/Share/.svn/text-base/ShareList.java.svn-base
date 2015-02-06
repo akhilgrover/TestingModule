@@ -1,0 +1,132 @@
+package Share;
+
+import java.io.Serializable;
+import java.util.*;
+import javolution.util.*;
+
+public class ShareList implements Serializable
+{
+
+    //private ArrayList<ShareData> shd;
+    private FastTable<ShareData> shd;
+    private TreeMap<Date,Integer> dDate;
+    private String Share;
+
+    /**
+     * Method ShareList
+     *
+     *
+     */
+    public ShareList() {
+        //shd=new ArrayList<ShareData>();
+        shd=new FastTable<ShareData>();
+        dDate=new TreeMap<Date,Integer>();
+    }
+
+    public ShareList(int count,String share) {
+        //shd=new ArrayList<ShareData>(count);
+        shd=new FastTable<ShareData>(count);
+        dDate=new TreeMap<Date, Integer>();
+        this.Share=share;
+    }
+
+    public void addShareData(ShareData sd)
+    {
+        shd.add(sd);
+        dDate.put(sd.getDate(), shd.size()-1);
+    }
+
+    public ShareData getSharedata(int i)
+    {
+        return shd.get(i);
+    }
+
+    public void updateSharedata(ShareData sd)
+    {
+        if(getdDate().containsKey(sd.getDate()))
+        {
+            int ind=getdDate().get(sd.getDate());
+            //shd.set(ind, sd);
+            ShareData old=shd.get(ind);
+            if(old==null)
+                addShareData(sd);
+            else if(old.getDate().equals(sd.getDate()))
+            {
+                old.setClosePrice(sd.getClosePrice());
+            }
+        }
+        else
+        {
+            addShareData(sd);
+        }
+    }
+
+    public int getSize()
+    {
+        return shd.size();
+    }
+
+    public String getShare()
+    {
+        return Share;
+    }
+
+    public int isDatePresent(Date dd)
+    {
+        int ret=-1;
+        Integer d=dDate.get(dd);
+        if(d!=null)
+            return d;
+        return ret;
+    }
+
+    public int isLowerDatePresent(Date dd)
+    {
+        int ret=-1;
+        Date d=dDate.lowerKey(dd);
+        if(d!=null)
+            ret=(Integer)getdDate().get(d);
+        return ret;
+    }
+
+    public int isHigherDatePresent(Date dd)
+    {
+        int ret=-1;
+        Date d=dDate.higherKey(dd);
+        if(d!=null)
+            ret=(Integer)getdDate().get(d);
+        return ret;
+    }
+
+    public ListIterator getIterator()
+    {
+        return shd.listIterator();
+    }
+
+    /**
+     * @param Share the Share to set
+     */
+    public void setShare(String Share) {
+        this.Share = Share;
+    }
+
+    /**
+     *
+     * @throws Throwable
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        dDate.clear();
+        shd.clear();
+        super.finalize();
+    }
+
+    /**
+     * @return the dDate
+     */
+    public SortedMap<Date,Integer> getdDate() {
+        return Collections.unmodifiableSortedMap(dDate);
+    }
+
+
+}

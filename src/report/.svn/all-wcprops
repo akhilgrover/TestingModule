@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/BackTestModule/!svn/ver/7/trunk/src/report
+END
+ProfitPerTradeComparatorOld.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/BackTestModule/!svn/ver/12/trunk/src/report/ProfitPerTradeComparatorOld.java
+END
+SummaryComparatorOld.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/BackTestModule/!svn/ver/12/trunk/src/report/SummaryComparatorOld.java
+END
+SystemGrade.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/BackTestModule/!svn/ver/12/trunk/src/report/SystemGrade.java
+END
+Grp.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/BackTestModule/!svn/ver/2/trunk/src/report/Grp.java
+END
+ExcelReportWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/2/trunk/src/report/ExcelReportWriter.java
+END
+SystemGrader.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/BackTestModule/!svn/ver/12/trunk/src/report/SystemGrader.java
+END
+ExcelSummaryReport.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/BackTestModule/!svn/ver/12/trunk/src/report/ExcelSummaryReport.java
+END
+SummaryRelativePerformance.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/BackTestModule/!svn/ver/2/trunk/src/report/SummaryRelativePerformance.java
+END
+Summary.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/BackTestModule/!svn/ver/12/trunk/src/report/Summary.java
+END
+SummaryToken.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/BackTestModule/!svn/ver/2/trunk/src/report/SummaryToken.java
+END
+PPTPDComparatorOld.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/BackTestModule/!svn/ver/12/trunk/src/report/PPTPDComparatorOld.java
+END

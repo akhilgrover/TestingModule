@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/open
+END
+DaysThresholdOpen.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/DaysThresholdOpen.java
+END
+SimpleChangeOpenOpp.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/SimpleChangeOpenOpp.java
+END
+Open.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/BackTestModule/!svn/ver/10/trunk/src/trade/open/Open.java
+END
+SimpleChangeOpen.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/SimpleChangeOpen.java
+END
+AbstractOpen.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/open/AbstractOpen.java
+END
+SignalCutThresholdOpen.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/SignalCutThresholdOpen.java
+END
+SignalCutOrThresholdOpen.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/SignalCutOrThresholdOpen.java
+END
+SignalCutOppOpen.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/SignalCutOppOpen.java
+END
+SignalCutOpen.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/SignalCutOpen.java
+END
+ThresholdOpenOpp.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/ThresholdOpenOpp.java
+END
+SimpleChangeThresholdOpen.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/SimpleChangeThresholdOpen.java
+END
+ThresholdOpen.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/open/ThresholdOpen.java
+END

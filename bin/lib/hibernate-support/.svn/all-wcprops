@@ -1,0 +1,101 @@
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support
+END
+hibernate-commons-annotations.jar
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/hibernate-commons-annotations.jar
+END
+hibernate-entitymanager.jar
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/hibernate-entitymanager.jar
+END
+javassist.jar
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/javassist.jar
+END
+asm-attrs.jar
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/asm-attrs.jar
+END
+jdbc2_0-stdext.jar
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/jdbc2_0-stdext.jar
+END
+dom4j-1.6.1.jar
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/dom4j-1.6.1.jar
+END
+jta.jar
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/jta.jar
+END
+ehcache-1.2.3.jar
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/ehcache-1.2.3.jar
+END
+cglib-2.1.3.jar
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/cglib-2.1.3.jar
+END
+asm.jar
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/asm.jar
+END
+hibernate3.jar
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/hibernate3.jar
+END
+commons-collections-2.1.1.jar
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/commons-collections-2.1.1.jar
+END
+antlr-2.7.6.jar
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/antlr-2.7.6.jar
+END
+hibernate-annotations.jar
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/hibernate-annotations.jar
+END
+commons-logging-1.1.jar
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/commons-logging-1.1.jar
+END
+hibernate-tools.jar
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/hibernate-support/hibernate-tools.jar
+END

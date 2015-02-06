@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/BackTestModule/!svn/ver/2/trunk/src/Summary/SummaryCompare
+END
+PPTPDComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/BackTestModule/!svn/ver/11/trunk/src/Summary/SummaryCompare/PPTPDComparator.java
+END
+ProfitPerTradeComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/BackTestModule/!svn/ver/11/trunk/src/Summary/SummaryCompare/ProfitPerTradeComparator.java
+END
+SummaryComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryCompare/SummaryComparator.java
+END
+GradeComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryCompare/GradeComparator.java
+END

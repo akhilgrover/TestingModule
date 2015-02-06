@@ -1,0 +1,192 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package indicator;
+
+import Share.ShareData;
+import Share.ShareList;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import org.apache.commons.math.stat.descriptive.moment.StandardDeviation;
+
+
+/**
+ *
+ * @author admin
+ */
+public class VolatilitypairIndicator extends AbstractIndicator {
+
+    /**
+     * Method init
+     *
+     *
+     */
+    @Override
+    public void init() {
+        this.params = new HashMap(2);
+        params.put(1, 20);   //period
+        params.put(2, 2);    //type, 2:Volatility_UKX, 3:Volatility_Combined, 4:Volatility_Difference, 5:Volatility_Lowest, 6:Volatility_Highest
+        this.name = "Volatility";
+        this.paramCount = 2;
+    }
+
+    @Override
+    public void init(HashMap param) {
+        this.params = param;
+        this.name = "Volatility";
+        this.paramCount = 2;
+    }
+
+    /**
+     * Method buildIndicator
+     *
+     *
+     * @return: Indicator result
+     *
+     * @return
+     * @param sl
+     */
+    @Override
+    public IndicatorList buildIndicator(ShareList sl) {
+        int param1 = (Integer) params.get(1);
+        double s1closeLog[] = new double[param1];
+        double volt_value1 = 0;
+        IndicatorList vol = new IndicatorList(sl.getSize());
+        IndicatorField indf;
+        StandardDeviation stdDev = new StandardDeviation();
+        ArrayList<ShareData> al1 = new ArrayList<ShareData>();
+        Calendar c=new GregorianCalendar(1997, Calendar.JANUARY, 1);
+
+        int currIndx = sl.isHigherDatePresent(c.getTime());
+        int backIndx = currIndx - param1;
+        if (currIndx < param1) {
+            currIndx = param1;
+            backIndx = 0;
+        }
+
+        int shlEndIdx = sl.getSize() - 1;  //e.g. size 3522 [so i=0 to 3521] hence shlEndIdx=3522-2=3520 to avoid today's date
+        for (int k = backIndx; k <= shlEndIdx; k++) {
+            ShareData sd = sl.getSharedata(k);
+            //debug.sopWC("k = " + k + " = " + G.myformat.format(sd.getDate()));
+            if (k < (backIndx + param1)) {
+                al1.add(sd);
+            } else {
+                if (k > (backIndx + param1)) {
+                    al1.remove(0);
+                }
+                al1.add(sd);
+                for (int j = 0; j < param1; j++) {
+                    s1closeLog[j] = Math.log(al1.get(j + 1).getClosePrice() / al1.get(j).getClosePrice());
+                    //debug.sopWC("******   " + al1.get(j+1).toString() +"   "+ al1.get(j).toString()+ "   " + G.myformat.format(sd.getDate()) + "   " + s1closeLog[j]);
+                }
+                volt_value1 = stdDev.evaluate(s1closeLog) * Math.sqrt(252) * 100;
+                if (volt_value1 >= 100) {
+                    volt_value1 = 99.99;
+                }
+                indf = new IndicatorField(sd.getDate(), volt_value1,0);
+                vol.addIndField(indf);
+            }
+        }
+        indf = null;
+        return vol;
+    }
+
+    /**
+     *
+     * @param sl1
+     * @param sl2
+     * @return
+     */
+    @Override
+    public IndicatorList buildIndicator(ShareList sl1, ShareList sl2) {
+        int variance = (Integer) params.get(1);
+        int type = (Integer) params.get(2);
+        //Date fromDt=G.myformat.format(params.get(3));
+        //Date toDt=G.myformat.format(params.get(4));
+        double s1closeLog[] = new double[variance];
+        double s2closeLog[] = new double[variance];
+        double volt_value1 = 0.0;
+        double volt_value2 = 0.0;
+        IndicatorList idl = new IndicatorList(sl1.getSize());
+        IndicatorField idf = null;
+        StandardDeviation stdDev = new StandardDeviation();
+        ArrayList<ShareData> al1 = new ArrayList<ShareData>();
+        ArrayList<ShareData> al2 = new ArrayList<ShareData>();
+
+        Calendar c=new GregorianCalendar(1997, Calendar.JANUARY, 1);
+        int currIndx = sl1.isHigherDatePresent(c.getTime());
+        int backIndx = currIndx - variance;
+        if (currIndx < variance) {
+            currIndx = variance;
+            backIndx = 0;
+        }
+
+        int shlEndIdx = sl1.getSize() - 1;  //e.g. size 3522 [so i=0 to 3521] hence shlEndIdx=3522-2=3520 to avoid today's date
+        for (int k = backIndx; k <= shlEndIdx; k++) {
+            ShareData sd1 = sl1.getSharedata(k);
+            ShareData sd2 = sl2.getSharedata(k);
+            //debug.sopWC("k = " + k + " = " + G.myformat.format(sd1.getDate()));
+            if (k < (backIndx + variance)) {
+                al1.add(sd1);
+                al2.add(sd2);
+            } else {
+                if (k > (backIndx + variance)) {
+                    al1.remove(0);
+                    al2.remove(0);
+                }
+                al1.add(sd1);
+                al2.add(sd2);
+                for (int j = 0; j < variance; j++) {
+                    s1closeLog[j] = Math.log(al1.get(j + 1).getClosePrice() / al1.get(j).getClosePrice());
+                    s2closeLog[j] = Math.log(al2.get(j + 1).getClosePrice() / al2.get(j).getClosePrice());
+                    //debug.sopWC("******   " + al1.get(j+1).toString() +"   "+ al1.get(j).toString()+ "   " + G.myformat.format(sd1.getDate()) + "   " + s1closeLog[j]);
+                    //debug.sopWC("\t   " + al2.get(j+1).toString() +"   "+ al2.get(j).toString()+ "   " + G.myformat.format(sd2.getDate()) + "   " + s2closeLog[j]);
+                }
+                volt_value1 = stdDev.evaluate(s1closeLog) * Math.sqrt(252) * 100;
+                volt_value2 = stdDev.evaluate(s2closeLog) * Math.sqrt(252) * 100;
+                if (volt_value1 >= 100) {
+                    volt_value1 = 99.99;
+                }
+                if (volt_value2 >= 100) {
+                    volt_value2 = 99.99;
+                }
+
+                double calcIndValue = 0.0;
+                switch (type) {
+                    case 3: //volatility_combined
+                        calcIndValue = (volt_value1 + volt_value2) * (1.0) / (2 * 1.0);
+                        break;
+                    case 4: //volatility_difference
+                        calcIndValue = Math.abs(volt_value1 - volt_value2);
+                        break;
+                    case 5: //volatility_lowest
+                        calcIndValue = Math.min(volt_value1, volt_value2);
+                        break;
+                    case 6: //volatility_highest
+                        calcIndValue = Math.max(volt_value1, volt_value2);
+                        break;
+                }
+                idf = new IndicatorField(sd1.getDate(), calcIndValue,0);
+                idl.addIndField(idf);
+            }
+        }
+        idf = null;
+        return idl;
+    }
+
+    @Override
+    public String toString() {
+        int param1 = (Integer) params.get(1);
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(name);
+        buffer.append(" ");
+        buffer.append(param1);
+        buffer.append(" Period ");
+        buffer.append(" ");
+        return buffer.toString();
+    }
+}

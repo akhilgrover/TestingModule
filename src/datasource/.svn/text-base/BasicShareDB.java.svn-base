@@ -1,0 +1,737 @@
+package datasource;
+
+import java.util.*;
+import java.util.Date;
+import java.sql.*;
+import Share.*;
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import ma.MA;
+
+public class BasicShareDB implements Serializable {
+
+    private ShareList slist;
+    private Connection con;
+    private Connection conInst;
+    private Statement stmt;
+    private Statement stmtInst;
+    //private ResultSet rs;
+    SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+    private static final Calendar c = Calendar.getInstance();
+
+    /**
+     * Method BasicShareDB
+     *
+     *
+     */
+    public BasicShareDB() throws Exception {
+
+        createConn();
+
+    }
+
+    public Date getIndexStart(String toString)
+            throws SQLException {
+        Date ret = null;
+        String sql = "SELECT TOP 1 Indices.Date FROM Indices GROUP BY Indices.Date, Indices.[index] HAVING (((Indices.[index])='" + toString + "')) ORDER BY Indices.Date;";
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            ret = rs.getDate(1);
+        }
+        return ret;
+    }
+
+    /*
+     * get Data for a share since 1995
+     */
+    public synchronized ShareList getShareData(String Share)
+            throws Exception {
+        //stmt=con.createStatement();
+            /*int count=0;
+        String sql="Select count(sharedate) from shares where code='"+Share+"' and shares.ShareDate>'1/1/1995';";
+        if(stmt==null || con.isClosed())
+        createConn();
+        ResultSet rs=stmt.executeQuery(sql);
+        while(rs.next())
+        {
+        count=rs.getInt(1);
+        }
+        rs.close();
+        if(count==0)
+        {
+        sql="Select count(sharedate) from sharescomplete where code='"+Share+"' and sharescomplete.ShareDate>'1/1/1995';";
+        rs=stmt.executeQuery(sql);
+        while(rs.next())
+        {
+        count=rs.getInt(1);
+        }
+        rs.close();
+        if(count==0)
+        return new ShareList(count,Share.intern());
+        sql="Select sharedate,[close1],high,low,[open],volume from sharescomplete where code='"+Share+"' and sharescomplete.ShareDate>'1/1/1995' order by sharedate;";
+        }
+        else
+        sql="Select sharedate,[close],high,low,[open],volume from shares where code='"+Share+"' and shares.ShareDate>'1/1/1995' order by sharedate;";
+        slist=new ShareList(count,Share.intern());
+
+        rs=stmt.executeQuery(sql);
+        while(rs.next())
+        {
+        ShareData sd=new ShareData(Share.intern(),rs.getDate(1,c),rs.getDouble(2),rs.getDouble(3),rs.getDouble(4),rs.getDouble(5),rs.getLong(6));
+        slist.addShareData(sd);
+        }
+        rs.close();
+        return slist;*/
+
+        String sql = "Select sharedate,[close],high,low,[open],volume from shares where code='" + Share + "' and shares.ShareDate>'1/1/1995' order by sharedate;";
+        slist = new ShareList(4000, Share.intern());
+
+        if (stmt == null || con.isClosed()) {
+            createConn();
+        }
+        ResultSet rs = stmt.executeQuery(sql);
+        //rs.last();
+        //System.out.println(rs.getRow());
+        //rs.first();
+        while (rs.next()) {
+            ShareData sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5), rs.getLong(6));
+            slist.addShareData(sd);
+        }
+        rs.close();
+        if (slist.getSize() == 0) {
+            sql = "Select sharedate,[close1],high,low,[open],volume from sharescomplete where code='" + Share + "' and sharescomplete.ShareDate>'1/1/1995' order by sharedate;";
+            rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                ShareData sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5), rs.getLong(6));
+                slist.addShareData(sd);
+            }
+            rs.close();
+        }
+        return slist;
+
+
+    }
+
+    public synchronized ShareList getShareTableData(String Share, String table)
+            throws Exception {
+        //stmt=con.createStatement();
+        String cls = "close";
+        if (table.equals("SharesComplete")) {
+            cls = "close1";
+        }
+        int count = 0;
+        String sql = "Select count(sharedate) from " + table + " where code='" + Share + "' and ShareDate>'1/1/1995';";
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            count = rs.getInt(1);
+        }
+        rs.close();
+        slist = new ShareList(count, Share);
+        sql = "Select sharedate,[" + cls + "],high,low,[open],volume from " + table + " where code='" + Share + "' and ShareDate>'1/1/1995' order by sharedate;";
+        rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+
+            ShareData sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5), rs.getLong(6));
+            slist.addShareData(sd);
+        }
+        rs.close();
+        return slist;
+    }
+
+    public synchronized ShareList getInteradayShareData(String Share, String timeFrom, String timeTo)
+            throws Exception {
+        //stmt=con.createStatement();
+        int count = 0;
+        String sql = "Select count(sharedate) from InteradayShares where code='" + Share + "' and InteradayShares.ShareDate>'1/1/1995';";
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            count = rs.getInt(1);
+        }
+        rs.close();
+        slist = new ShareList(count, Share);
+        sql = "Select sharedate,[close],high,low,[open],volume from InteradayShares where code='" + Share + "' and InteradayShares.ShareDate>'1/1/1995' and (CONVERT(varchar(10), ShareDate, 108) BETWEEN '" + timeFrom + "' AND '" + timeTo + "') order by sharedate;";
+        rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            ShareData sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5), rs.getLong(6));
+            slist.addShareData(sd);
+        }
+        rs.close();
+        return slist;
+    }
+
+    public ArrayList getInteradayShares() throws Exception {
+        ArrayList arr = new ArrayList();
+        //stmt=con.createStatement();
+        String sql = "Select distinct code from InteradayShares;";
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            arr.add(rs.getString(1).intern());
+        }
+        rs.close();
+        return arr;
+    }
+
+    public synchronized ShareList getShareData(String rfType, String rfGroup)
+            throws Exception {
+        String Share = rfType + " " + rfGroup;
+        slist = new ShareList(4000, Share);
+        rfType = getSys(rfType);
+        String sql = "select date," + rfType + " from RisersFallersHistory where Date>'1/1/1995'";
+        //String sql="select date,"+rfType+" from RF_ASX where Date>'1/1/1995'";
+        if (rfGroup.equals("AllWithoutTrust")) {
+            sql = "select date,(" + rfType + "/count)*100 from RisersFallersHistoryWithoutTrust where count>0 and Date>'1/1/1995'";
+            //sql="select date,("+rfType+"/count)*100 from RF_ASX where Date>'1/1/1995'";
+        } else if (rfGroup.equals("INC")) {
+            //sql="select date,("+rfType+"/count)*100 from RisersFallersHistoryWithoutTrust where Date>'1/1/1995'";
+            sql = "select date,(" + rfType + "/count)*100 from RF_ASX where count>0 and Date>'1/1/1995'";
+        } else if (rfGroup.equals("EXC")) {
+            //sql="select date,("+rfType+"/count)*100 from RisersFallersHistoryWithoutTrust where Date>'1/1/1995'";
+            sql = "select date,(" + rfType + "Ex/countEx)*100 from RF_ASX where count>0 and Date>'1/1/1995'";
+        } else if (rfGroup.equals("AllWithTrust")) {
+            //sql="select date,("+tbl+"/count)*100 from RisersFallersHistoryWithTrust";
+        } else if (rfGroup.equals("GSPC")) {
+            sql = "select date," + rfType + " from RisersFallersHistoryGSPC where count>0 and Date>'1/1/1995'";
+        }
+        if (stmt == null || con.isClosed()) {
+            createConn();
+        }
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            ShareData sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), 0, 0, 0, 0);
+            slist.addShareData(sd);
+        }
+        rs.close();
+        return slist;
+    }
+
+    public synchronized ShareData getShareData(String rfType, String rfGroup, Date dd)
+            throws Exception {
+
+        String Share = rfType + " " + rfGroup;
+        ShareData sd = null;
+        rfType = getSys(rfType);
+        String sql = "select date," + rfType + " from RisersFallersHistory where Date='" + sdf.format(dd) + "' order by date";
+        //String sql="select date,"+rfType+" from RF_ASX where Date='"+sdf.format(dd)+"' order by date";
+        if (rfGroup.equals("AllWithoutTrust")) {
+            sql = "select date,(" + rfType + "/count)*100 from RisersFallersHistoryWithoutTrust where Date='" + sdf.format(dd) + "' order by date";
+            //sql="select date,("+rfType+"/count)*100 from RF_ASX where Date='"+sdf.format(dd)+"' order by date";
+        } else if (rfGroup.equals("INC")) {
+            //sql="select date,("+rfType+"/count)*100 from RisersFallersHistoryWithoutTrust where Date='"+sdf.format(dd)+"' order by date";
+            sql = "select date,(" + rfType + "/count)*100 from RF_ASX where count>0 and Date='" + sdf.format(dd) + "' order by date";
+        } else if (rfGroup.equals("EXC")) {
+            //sql="select date,("+rfType+"/count)*100 from RisersFallersHistoryWithoutTrust where Date='"+sdf.format(dd)+"' order by date";
+            sql = "select date,(" + rfType + "Ex/countEx)*100 from RF_ASX where countEx>0 and Date='" + sdf.format(dd) + "' order by date";
+        } else if (rfGroup.equals("AllWithTrust")) {
+            //sql="select date,("+tbl+"/count)*100 from RisersFallersHistoryWithTrust";
+        }
+        if (stmt == null || con.isClosed()) {
+            createConn();
+        }
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), 0, 0, 0, 0);
+        }
+        rs.close();
+        return sd;
+    }
+
+    public synchronized ShareList getShareData(String rfType, String rfGroup, MA ma, boolean round)
+            throws Exception {
+        String Share = rfType + " " + rfGroup + " " + ma.getPeriod() + " DS";
+        slist = new ShareList(4000, Share);
+        rfType = getSys(rfType);
+        String sql = "select date," + rfType + " from RisersFallersHistory where Date>'1/1/1995' order by date";
+        //String sql="select date,"+rfType+" from RF_ASX where Date>'1/1/1995' order by date";
+        if (rfGroup.equals("AllWithoutTrust")) {
+            sql = "select date,(" + rfType + "/count)*100 from RisersFallersHistoryWithoutTrust where Date>'1/1/1995' order by date";
+            //sql="select date,("+rfType+"/count)*100 from RF_ASX where Date>'1/1/1995' order by date";
+        } else if (rfGroup.equals("INC")) {
+            sql = "select date,(" + rfType + "/count)*100 from RF_ASX where count>0 and Date>'1/1/1995' order by date";
+        } else if (rfGroup.equals("EXC")) {
+            sql = "select date,(" + rfType + "Ex/countEx)*100 from RF_ASX where count>0 and Date>'1/1/1995' order by date";
+        } else if (rfGroup.equals("AllWithTrust")) {
+            //sql="select date,("+tbl+"/count)*100 from RisersFallersHistoryWithTrust";
+        }
+        if (stmt == null || con.isClosed()) {
+            createConn();
+        }
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            if (round) {
+                ShareData sd = new ShareData(Share.intern(), rs.getDate(1, c), ma.next(rs.getInt(2)), 0, 0, 0, 0);
+                slist.addShareData(sd);
+            } else {
+                ShareData sd = new ShareData(Share.intern(), rs.getDate(1, c), ma.next(rs.getDouble(2)), 0, 0, 0, 0);
+                slist.addShareData(sd);
+            }
+
+        }
+        rs.close();
+        return slist;
+    }
+
+    public synchronized ShareData getShareData(String rfType, String rfGroup, MA ma, Date dd)
+            throws Exception {
+
+        String Share = rfType + " ".intern() + rfGroup + " " + ma.getPeriod() + " DS";
+        ShareData sd = null;
+        rfType = getSys(rfType);
+        String sql = "select date," + rfType + " from RisersFallersHistory where Date='" + sdf.format(dd) + "' order by date";
+        //String sql="select date,"+rfType+" from RF_ASX where Date='"+sdf.format(dd)+"' order by date";
+        if (rfGroup.equals("AllWithoutTrust")) {
+            sql = "select date,(" + rfType + "/count)*100 from RisersFallersHistoryWithoutTrust where Date='" + sdf.format(dd) + "' order by date";
+            //sql="select date,("+rfType+"/count)*100 from RF_ASX where Date='"+sdf.format(dd)+"' order by date";
+        } else if (rfGroup.equals("INC")) {
+            //sql="select date,("+rfType+"/count)*100 from RisersFallersHistoryWithoutTrust where Date='"+sdf.format(dd)+"' order by date";
+            sql = "select date,(" + rfType + "/count)*100 from RF_ASX where count>0 and Date='" + sdf.format(dd) + "' order by date";
+        } else if (rfGroup.equals("EXC")) {
+            //sql="select date,("+rfType+"/count)*100 from RisersFallersHistoryWithoutTrust where Date='"+sdf.format(dd)+"' order by date";
+            sql = "select date,(" + rfType + "Ex/countEx)*100 from RF_ASX where count>0 and Date='" + sdf.format(dd) + "' order by date";
+        } else if (rfGroup.equals("AllWithTrust")) {
+            //sql="select date,("+tbl+"/count)*100 from RisersFallersHistoryWithTrust";
+        }
+        if (stmt == null || con.isClosed()) {
+            createConn();
+        }
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            sd = new ShareData(Share.intern(), rs.getDate(1, c), ma.next(rs.getDouble(2)), 0, 0, 0, 0);
+        }
+        rs.close();
+        return sd;
+    }
+
+    public synchronized ShareList getShareDataFull(String Share)
+            throws Exception {
+        //stmt=con.createStatement();
+        int count = 0;
+        String sql = "Select count(sharedate) from shares where code='" + Share + "';";
+        if (stmt == null || con.isClosed()) {
+            createConn();
+        }
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            count = rs.getInt(1);
+        }
+        rs.close();
+        slist = new ShareList(count, Share);
+        sql = "Select sharedate,[close],high,low,[open],volume from shares where code='" + Share + "' order by sharedate;";
+        rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+
+            ShareData sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5), rs.getLong(6));
+            slist.addShareData(sd);
+        }
+        rs.close();
+        return slist;
+    }
+
+    public synchronized ShareList getShareDataTill(String Share, Date end)
+            throws Exception {
+        //stmt=con.createStatement();
+        int count = 0;
+        //SimpleDateFormat sdf=new SimpleDateFormat("MM/dd/yyyy");
+        String sql = "Select count(sharedate) from shares where code='" + Share + "' and shares.ShareDate>'1/1/1995' and shares.ShareDate<='" + end + "';";
+        if (stmt == null || con.isClosed()) {
+            createConn();
+        }
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            count = rs.getInt(1);
+        }
+        rs.close();
+        slist = new ShareList(count, Share);
+        sql = "Select sharedate,[close],high,low,[open],volume from shares where code='" + Share + "' and shares.ShareDate>'1/1/1995' and shares.ShareDate<='" + end + "' order by sharedate;";
+        rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+
+            ShareData sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5), rs.getLong(6));
+            slist.addShareData(sd);
+        }
+        rs.close();
+        return slist;
+    }
+    /*
+     *
+     * Get Data for share on a date
+     */
+
+    public synchronized ShareData getShareData(String Share, Date dd)
+            throws Exception {
+        //stmt=con.createStatement();
+        int count = 0;
+        String sql = "Select sharedate,[close],high,low,[open],volume from shares where code='" + Share + "' and sharedate='" + sdf.format(dd) + "';";
+        //if(con.isClosed())
+        //    stmt=con.createStatement();
+        ResultSet rs;
+        try {
+            rs = stmt.executeQuery(sql);
+        } catch (Exception ex) {
+            createConn();
+            rs = stmt.executeQuery(sql);
+        }
+        ShareData sd = null;
+        while (rs.next()) {
+            sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5), rs.getLong(6));
+        }
+        rs.close();
+
+        /*Calendar cal1=Calendar.getInstance();
+        Calendar cal2=Calendar.getInstance();
+        Calendar cal4=Calendar.getInstance();
+        Calendar cal5=Calendar.getInstance();
+        Calendar cal3=Calendar.getInstance();
+        cal1.set(Calendar.HOUR_OF_DAY, 0);
+        cal1.set(Calendar.MINUTE, 0);
+        cal1.set(Calendar.SECOND, 0);
+        cal1.set(Calendar.MILLISECOND, 0);
+        Date d=cal1.getTime();
+        if(!dd.before(d))
+        {
+        cal1.set(Calendar.HOUR_OF_DAY, 16);
+        cal1.set(Calendar.MINUTE, 30);
+        cal1.set(Calendar.SECOND, 0);
+        cal1.set(Calendar.MILLISECOND, 0);
+        cal2.set(Calendar.HOUR_OF_DAY, 16);
+        cal2.set(Calendar.MINUTE, 45);
+        cal2.set(Calendar.SECOND, 0);
+        cal2.set(Calendar.MILLISECOND, 0);
+        cal4.set(Calendar.HOUR_OF_DAY, 7);
+        cal4.set(Calendar.MINUTE, 55);
+        cal4.set(Calendar.SECOND, 0);
+        cal4.set(Calendar.MILLISECOND, 0);
+        cal5.set(Calendar.HOUR_OF_DAY, 8);
+        cal5.set(Calendar.MINUTE, 0);
+        cal5.set(Calendar.SECOND, 0);
+        cal5.set(Calendar.MILLISECOND, 0);
+        if(cal3.getTime().after(cal1.getTime()) && cal3.getTime().before(cal2.getTime()) || cal3.getTime().after(cal4.getTime()) && cal3.getTime().before(cal5.getTime()))
+        {
+        sql="Select XPrice from instrument where tidm='"+Share+"';";
+        rs=stmtInst.executeQuery(sql);
+        while(rs.next())
+        sd.setClosePrice(rs.getDouble(1));
+        }
+        }*/
+        return sd;
+    }
+
+    public synchronized ShareData getShareData(String Share, Date dd, String Index)
+            throws Exception {
+        ShareData sd = getShareData(Share.intern(), dd);
+        boolean done = false;
+        if (Index.equals("UKX")) {
+            Calendar cal1 = Calendar.getInstance();
+            Calendar cal2 = Calendar.getInstance();
+            Calendar cal4 = Calendar.getInstance();
+            Calendar cal5 = Calendar.getInstance();
+            Calendar cal3 = Calendar.getInstance();
+            cal1.set(Calendar.HOUR_OF_DAY, 0);
+            cal1.set(Calendar.MINUTE, 0);
+            cal1.set(Calendar.SECOND, 0);
+            cal1.set(Calendar.MILLISECOND, 0);
+            Date d = cal1.getTime();
+            if (!dd.before(d)) {
+                cal1.set(Calendar.HOUR_OF_DAY, 16);
+                cal1.set(Calendar.MINUTE, 30);
+                cal1.set(Calendar.SECOND, 0);
+                cal1.set(Calendar.MILLISECOND, 0);
+                cal2.set(Calendar.HOUR_OF_DAY, 16);
+                cal2.set(Calendar.MINUTE, 45);
+                cal2.set(Calendar.SECOND, 0);
+                cal2.set(Calendar.MILLISECOND, 0);
+                cal4.set(Calendar.HOUR_OF_DAY, 7);
+                cal4.set(Calendar.MINUTE, 55);
+                cal4.set(Calendar.SECOND, 0);
+                cal4.set(Calendar.MILLISECOND, 0);
+                cal5.set(Calendar.HOUR_OF_DAY, 8);
+                cal5.set(Calendar.MINUTE, 0);
+                cal5.set(Calendar.SECOND, 0);
+                cal5.set(Calendar.MILLISECOND, 0);
+                if (cal3.getTime().after(cal1.getTime()) && cal3.getTime().before(cal2.getTime()) || cal3.getTime().after(cal4.getTime()) && cal3.getTime().before(cal5.getTime())) {
+                    String sql = "Select XPrice from instrument where tidm='" + Share + "';";
+                    if (stmtInst == null || conInst.isClosed()) {
+                        createConn();
+                    }
+                    ResultSet rs = stmtInst.executeQuery(sql);
+                    done = true;
+                    while (rs.next()) {
+                        sd.setClosePrice(rs.getDouble(1));
+                    }
+                }
+            }
+        }
+        return sd;
+    }
+
+    public synchronized ShareData getShareDataLower(String Share, Date dd)
+            throws Exception {
+        //stmt=con.createStatement();
+        int count = 0;
+        String sql = "Select top(1) sharedate,[close],high,low,[open],volume from shares where code='" + Share + "' and sharedate<'" + dd + "' order by sharedate desc;";
+        ResultSet rs = stmt.executeQuery(sql);
+        ShareData sd = null;
+        while (rs.next()) {
+            sd = new ShareData(Share.intern(), rs.getDate(1, c), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5), rs.getLong(6));
+        }
+        rs.close();
+        return sd;
+    }
+
+    public synchronized ArrayList getShares()
+            throws Exception {
+        ArrayList arr = new ArrayList();
+        //stmt=con.createStatement();
+        String sql = "Select distinct code from shares order by code;";
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            arr.add(rs.getString(1).intern());
+        }
+        rs.close();
+        return arr;
+    }
+
+    public ArrayList getIndexShares(String index)
+            throws Exception {
+        ArrayList arr = new ArrayList();
+        //stmt=con.createStatement();
+        String sql = "Select distinct code from indices where [index]='" + index + "' order by code;";
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            arr.add(rs.getString(1).intern());
+        }
+        rs.close();
+        return arr;
+    }
+
+    public ArrayList getIndexCombinedShares(String index)
+            throws Exception {
+        ArrayList arr = new ArrayList();
+        //stmt=con.createStatement();
+        String sql = "Select distinct code from indicescombined where [index]='" + index + "' order by code;";
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            arr.add(rs.getString(1).intern());
+        }
+        rs.close();
+        return arr;
+    }
+
+    public ArrayList getShareGroups()
+            throws Exception {
+        ArrayList arr = new ArrayList();
+        //stmt=con.createStatement();
+        String sql = "Select distinct list from groups;";
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            arr.add(rs.getString(1).intern());
+        }
+        rs.close();
+        return arr;
+    }
+
+    public ArrayList getBlockGroups()
+            throws Exception {
+        ArrayList arr = new ArrayList();
+        //stmt=con.createStatement();
+        String sql = "Select distinct [index] from Indices;";
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            arr.add(rs.getString(1).intern());
+        }
+        rs.close();
+        return arr;
+    }
+
+    public ArrayList getSharesListQuery(String sql)
+            throws Exception {
+        ArrayList arr = new ArrayList();
+        //stmt=con.createStatement();
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            arr.add(rs.getString(1).intern());
+        }
+        rs.close();
+        return arr;
+    }
+
+    public void close() throws SQLException {
+        if (con != null) {
+            con.close();
+        }
+        if (conInst != null) {
+            conInst.close();
+        }
+        slist = null;
+        con = null;
+        stmt = null;
+        conInst = null;
+        stmtInst = null;
+        //rs=null;
+        System.gc();
+    }
+
+    public synchronized double getIndexXPrice(ShareList indSL, Date dd) throws SQLException {
+        String sql = "SELECT      sum(InstrumentIssues.issue * Instrument.xprice) , "
+                + "sum(InstrumentIssues.issue *Instrument.PrevClose)"
+                + " FROM         Instrument INNER JOIN "
+                + "InstrumentIssues ON Instrument.TIDM = InstrumentIssues.code;";
+        ResultSet rs = stmtInst.executeQuery(sql);
+        long mCapToday = 0;
+        long mCapYest = 0;
+        while (rs.next()) {
+            mCapToday = rs.getLong(1);
+            mCapYest = rs.getLong(2);
+        }
+        double yestPrice = indSL.getSharedata(indSL.isLowerDatePresent(dd)).getClosePrice();
+        double indexDiv = mCapYest / yestPrice;
+        return mCapToday / indexDiv;
+    }
+
+    public synchronized double getIndexLivePrice(ShareList indSL, Date dd) throws SQLException {
+        String sql = "SELECT      sum(InstrumentIssues.issue * Instrument.mid) , "
+                + "sum(InstrumentIssues.issue *Instrument.PrevClose)"
+                + " FROM         Instrument INNER JOIN "
+                + "InstrumentIssues ON Instrument.TIDM = InstrumentIssues.code;";
+        ResultSet rs = stmtInst.executeQuery(sql);
+        long mCapToday = 0;
+        long mCapYest = 0;
+        while (rs.next()) {
+            mCapToday = rs.getLong(1);
+            mCapYest = rs.getLong(2);
+        }
+        double yestPrice = indSL.getSharedata(indSL.isLowerDatePresent(dd)).getClosePrice();
+        double indexDiv = mCapYest / yestPrice;
+        return mCapToday / indexDiv;
+    }
+
+    public synchronized DividendList getDividendData(String Share, Date dt1, Date dt2) throws Exception {
+        int count = 10;
+        String sql1 = null, sql2 = null;
+
+        if (dt1 != null && dt2 != null) {
+            /* Select count(count1) count from (
+            Select count(DivDate) count1 from dividend
+            where code='AAL' and dividend.DivDate>='01/01/2005' and dividend.DivDate<='01/01/2008'
+            group by DivDate
+            ) as dividend_Alias */
+            sql1 = "Select count(count1) count from ( ";
+            sql1 = sql1 + "Select count(DivDate) count1 from dividend where code='" + Share + "' and dividend.DivDate>='" + dt1 + "' and dividend.DivDate<='" + dt2 + "' group by DivDate ";
+            sql1 = sql1 + ") as dividend_Alias ; ";
+            /* Select DivDate, sum(DivAmt) DivAmt from dividend
+            where code='AAL' and dividend.DivDate>='01/01/2005' and dividend.DivDate<='01/01/2008'
+            group by DivDate
+            order by DivDate */
+            sql2 = "Select DivDate, sum(DivAmt) DivAmt from dividend where code='" + Share + "' and dividend.DivDate>='" + dt1 + "' and dividend.DivDate<='" + dt2 + "' group by DivDate order by DivDate ; ";
+        }
+
+        //ResultSet rs = stmt.executeQuery(sql1);
+        //while (rs.next()) {
+        //    count = rs.getInt(1);
+        //}
+        //debug.sop("sql1 count " + count);
+        //rs.close();
+        DividendList divlist = new DividendList(count, Share);
+
+        ResultSet rs = stmt.executeQuery(sql2);
+        while (rs.next()) {
+            DividendData dd = new DividendData(Share.intern(), rs.getDate(1, c), rs.getDouble(2));
+            divlist.addDividendData(dd);
+        }
+        //debug.sop("slist " + slist.getSize());
+        rs.close();
+        return divlist;
+    }
+
+    public synchronized DividendList getDividendData(String Share) throws Exception {
+        int count = 0;
+        String sql1 = null, sql2 = null;
+
+
+        sql1 = "Select count(count1) count from ( ";
+        sql1 += "Select count(DivDate) count1 from dividend where code='" + Share + "' group by DivDate ";
+        sql1 += ") as dividend_Alias ; ";
+
+        sql2 = "Select DivDate, sum(DivAmt) DivAmt from dividend where code='" + Share + "' group by DivDate order by DivDate ; ";
+
+        ResultSet rs = stmt.executeQuery(sql1);
+        while (rs.next()) {
+            count = rs.getInt(1);
+        }
+        //debug.sop("sql1 count " + count);
+        rs.close();
+        DividendList divlist = new DividendList(count, Share);
+
+        rs = stmt.executeQuery(sql2);
+        while (rs.next()) {
+            DividendData dd = new DividendData(Share.intern(), rs.getDate(1, c), rs.getDouble(2));
+            divlist.addDividendData(dd);
+        }
+        //debug.sop("slist " + slist.getSize());
+        rs.close();
+        return divlist;
+    }
+
+    private synchronized void createConn() throws Exception {
+        //Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+        Class.forName("net.sourceforge.jtds.jdbc.Driver");
+        con = DriverManager.getConnection("jdbc:jtds:sqlserver://jeysql;user=BackTradeData;password=oracle");
+        Class.forName("net.sourceforge.jtds.jdbc.Driver");
+        conInst = DriverManager.getConnection("jdbc:jtds:sqlserver://jeysql;user=Interactive;password=oracle");
+        //con = DriverManager.getConnection("jdbc:odbc:BackTestNew","","");
+
+        //stmt=con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        stmt = con.createStatement();
+        stmtInst = conInst.createStatement();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+
+        con.close();
+        conInst.close();
+        super.finalize();
+
+    }
+
+    private String getSys(String rfType) {
+
+        if (rfType.equals("Sys A")) {
+            return "YearHigh";
+        }
+        if (rfType.equals("Sys B")) {
+            return "YearLow";
+        }
+        if (rfType.equals("Sys C")) {
+            return "Risers3Day";
+        }
+        if (rfType.equals("Sys D")) {
+            return "Fallers3Day";
+        }
+        if (rfType.equals("Sys E")) {
+            return "Risers4Day";
+        }
+        if (rfType.equals("Sys F")) {
+            return "Fallers4Day";
+        }
+        if (rfType.equals("Sys G")) {
+            return "Static3DUp";
+        }
+        if (rfType.equals("Sys H")) {
+            return "Static3DDown";
+        }
+        if (rfType.equals("Sys I")) {
+            return "Static4DUp";
+        }
+        if (rfType.equals("Sys J")) {
+            return "Static4DDown";
+        }
+        if (rfType.equals("Sys K")) {
+            return "Bullish";
+        }
+        if (rfType.equals("Sys L")) {
+            return "Bearish";
+        }
+
+        return "";
+    }
+}

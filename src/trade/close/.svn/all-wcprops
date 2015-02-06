@@ -1,0 +1,173 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close
+END
+ThresholdCloseRange.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/ThresholdCloseRange.java
+END
+ThresholdOrDaysCutCloseOpp.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/close/ThresholdOrDaysCutCloseOpp.java
+END
+AbstractIndividualClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/BackTestModule/!svn/ver/11/trunk/src/trade/close/AbstractIndividualClose.java
+END
+DaysThresholdClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/DaysThresholdClose.java
+END
+HighLimitClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/HighLimitClose.java
+END
+SimpleChangeCloseOpp.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/SimpleChangeCloseOpp.java
+END
+Close.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/Close.java
+END
+ChangeDaysCutClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/ChangeDaysCutClose.java
+END
+HighLimitChangeSLClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/close/HighLimitChangeSLClose.java
+END
+DaysCutSignalCutClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/close/DaysCutSignalCutClose.java
+END
+IndividualClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/BackTestModule/!svn/ver/11/trunk/src/trade/close/IndividualClose.java
+END
+ThresholdOrDaysCutCloseSL.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/BackTestModule/!svn/ver/8/trunk/src/trade/close/ThresholdOrDaysCutCloseSL.java
+END
+SignalCutClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/close/SignalCutClose.java
+END
+DayCutClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/close/DayCutClose.java
+END
+ThresholdOrDaysCutClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/close/ThresholdOrDaysCutClose.java
+END
+ThresholdClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/close/ThresholdClose.java
+END
+SimpleChangeDaysCutClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/SimpleChangeDaysCutClose.java
+END
+DaysCutSimpleChangeClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/DaysCutSimpleChangeClose.java
+END
+HighLimitDaysSLClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/close/HighLimitDaysSLClose.java
+END
+HighLimitDaysClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/HighLimitDaysClose.java
+END
+SimpleChangeClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/SimpleChangeClose.java
+END
+RsiThresholdSkipClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/BackTestModule/!svn/ver/11/trunk/src/trade/close/RsiThresholdSkipClose.java
+END
+AbstractClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/AbstractClose.java
+END
+DaysCutSignalCutOppClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/close/DaysCutSignalCutOppClose.java
+END
+SignalCutThresholdClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/SignalCutThresholdClose.java
+END
+SignalCutOrThresholdClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/SignalCutOrThresholdClose.java
+END
+SignalCutOppClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/close/SignalCutOppClose.java
+END
+ThresholdOrDaysCutRSIClose.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/BackTestModule/!svn/ver/9/trunk/src/trade/close/ThresholdOrDaysCutRSIClose.java
+END

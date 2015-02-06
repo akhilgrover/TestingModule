@@ -1,0 +1,71 @@
+
+
+package indicator;
+
+import Share.ShareData;
+import Share.ShareList;
+import java.util.HashMap;
+import java.util.Iterator;
+import ma.MA;
+
+/**
+ *
+ * @author Admin
+ */
+public class TrendIndicator extends AbstractIndicator 
+{
+    
+
+    @Override
+    public void init() 
+    {
+        this.params=new HashMap();
+        params.put(1, 5);
+        this.name="Trend";
+        this.paramCount=1;
+    }
+
+    @Override
+    public void init(HashMap param) 
+    {
+        this.params=param;
+        this.name="Trend";
+        this.paramCount=1;
+    }
+
+    @Override
+    public IndicatorList buildIndicator(ShareList sl) 
+    {
+        int param1=(Integer)params.get(1);
+        IndicatorList trend=new IndicatorList(sl.getSize());
+	MA sma = new MA(param1,MA.Simple);
+        Iterator itr=sl.getIterator();
+	for (int i=0; i<sl.getSize(); i++)
+	{
+            ShareData sd=(ShareData) itr.next();
+            if (sd.getClosePrice()>sma.next((sd.getClosePrice() + sd.getHigh() + sd.getLow())/3))
+            {
+                trend.addIndField(new IndicatorField(sd.getDate(), 1, 0));
+            }
+            else
+            {
+                trend.addIndField(new IndicatorField(sd.getDate(), 0, 0));
+            }
+	}
+	return trend;
+    }
+    
+    @Override
+	public String toString()
+	{
+            int param1=(Integer)params.get(1);
+            StringBuffer buffer = new StringBuffer();
+            buffer.append(name);
+            buffer.append(" ");
+            buffer.append(param1);
+            buffer.append(" Period ");
+            buffer.append(" ");
+            return buffer.toString();
+	}
+
+}

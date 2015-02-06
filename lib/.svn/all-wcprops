@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/BackTestModule/!svn/ver/2/trunk/lib
+END
+jtds-1.2.4.jar
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/BackTestModule/!svn/ver/2/trunk/lib/jtds-1.2.4.jar
+END
+nblibraries.properties
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/BackTestModule/!svn/ver/12/trunk/lib/nblibraries.properties
+END
+jxl.jar
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/BackTestModule/!svn/ver/2/trunk/lib/jxl.jar
+END
+commons-math-2.1.jar
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/BackTestModule/!svn/ver/2/trunk/lib/commons-math-2.1.jar
+END
+ehcache-1.6.1.jar
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/BackTestModule/!svn/ver/2/trunk/lib/ehcache-1.6.1.jar
+END
+javolution-5.4.5.jar
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/BackTestModule/!svn/ver/2/trunk/lib/javolution-5.4.5.jar
+END
+jtds-1.2.jar
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/BackTestModule/!svn/ver/2/trunk/lib/jtds-1.2.jar
+END

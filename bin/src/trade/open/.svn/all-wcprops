@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/BackTestModule/!svn/ver/2/trunk/bin/src/trade/open
+END
+SignalCutOpen.class
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/BackTestModule/!svn/ver/2/trunk/bin/src/trade/open/SignalCutOpen.class
+END
+ThresholdOpen.class
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/BackTestModule/!svn/ver/2/trunk/bin/src/trade/open/ThresholdOpen.class
+END
+DaysThresholdOpen.class
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/BackTestModule/!svn/ver/2/trunk/bin/src/trade/open/DaysThresholdOpen.class
+END
+SimpleChangeOpenOpp.class
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/BackTestModule/!svn/ver/2/trunk/bin/src/trade/open/SimpleChangeOpenOpp.class
+END
+Open.class
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/BackTestModule/!svn/ver/2/trunk/bin/src/trade/open/Open.class
+END
+SimpleChangeOpen.class
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/BackTestModule/!svn/ver/2/trunk/bin/src/trade/open/SimpleChangeOpen.class
+END
+AbstractOpen.class
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/BackTestModule/!svn/ver/2/trunk/bin/src/trade/open/AbstractOpen.class
+END
+SignalCutThresholdOpen.class
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/BackTestModule/!svn/ver/2/trunk/bin/src/trade/open/SignalCutThresholdOpen.class
+END

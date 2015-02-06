@@ -1,0 +1,87 @@
+package indicator;
+
+import java.util.*;
+import javolution.util.FastTable;
+
+public class IndicatorList {
+	
+	//private ArrayList<IndicatorField> indList;
+        private FastTable<IndicatorField> indList;
+        private TreeMap<Long,Integer> dDate;
+	
+	/**
+	 * Method IndicatorList
+	 *
+	 *
+	 */
+	public IndicatorList() {
+		
+            indList=new FastTable<IndicatorField>(4000);
+            dDate=new TreeMap<Long, Integer>();
+	}
+        
+        public IndicatorList(int count) {
+		
+            indList=new FastTable<IndicatorField>(count);
+            dDate=new TreeMap<Long, Integer>();
+	}
+	
+	public void addIndField(IndicatorField indf)
+	{
+            indList.add(indf);
+            dDate.put(indf.getDDate().getTime(), indList.size()-1);
+	}
+	
+	public IndicatorField getSharedata(int i)
+	{
+            return indList.get(i);
+	}
+	
+	public int getSize()
+	{
+            return indList.size();
+	}
+	
+	public int isDatePresent(Date dd)
+	{
+            int ret=-1;
+            Integer d=dDate.get(dd.getTime());
+            if(d!=null)
+                ret=d;
+            return ret;
+	}
+        
+        /**
+         * 
+         * @return
+         */
+        public Iterator<IndicatorField> getIterator()
+        {
+            return indList.iterator();
+        }
+        
+        public IndicatorList filterRange(Date start, Date end,double threshold,int skips,boolean sell)
+        {
+            NavigableMap<Long, Integer> m=dDate.subMap(start.getTime(), false, end.getTime(), false);
+            IndicatorList il=new IndicatorList();
+            for(Long d:m.keySet())
+            {
+                IndicatorField indF=indList.get(m.get(d));
+                IndicatorField indFL=indList.get(dDate.lowerEntry(d).getValue());
+                if(!sell && indF.getValue()>=threshold && indFL.getValue()<threshold)
+                {
+                    il.addIndField(indF);
+                    if(il.getSize()==skips)
+                        break;
+                }
+                else if(sell && indF.getValue()<=threshold && indFL.getValue()<threshold)
+                {
+                    il.addIndField(indF);
+                    if(il.getSize()==skips)
+                        break;
+                }
+            }
+            return il;
+        }
+        
+}

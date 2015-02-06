@@ -1,0 +1,22 @@
+package trade.filter;
+
+import Share.ShareList;
+import java.util.HashMap;
+
+
+public interface Filters
+{
+    public boolean filterTrade(int shareIndex, int buy, ShareList sl);
+
+    public void buildFilter(int buy, ShareList sl);
+	
+    @Override
+	public String toString();
+    
+    public int getParamCount();
+    
+    public HashMap getParams();
+    
+    public void setParams(HashMap param);
+
+}

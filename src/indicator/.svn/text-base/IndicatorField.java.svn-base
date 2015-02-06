@@ -1,0 +1,54 @@
+package indicator;
+
+import java.util.*;
+public class IndicatorField {
+	
+	private long dDate;
+	private double value;
+	private double signal;
+	
+	/**
+	 * Method IndicatorField
+	 *
+	 *
+	 */
+	public IndicatorField(Date dat,double val,double sig) {
+		
+		this.dDate=dat.getTime();
+		this.value=val;
+		this.signal=sig;
+	}
+
+	
+	public void setDDate(Date dDate) {
+		this.dDate = dDate.getTime();
+	}
+
+	public void setValue(double value) {
+		this.value = value; 
+	}
+
+	public void setSignal(double signal) {
+		this.signal = signal; 
+	}
+
+	public Date getDDate() {
+		return (new Date(this.dDate));
+	}
+
+	public double getValue() {
+		return (this.value); 
+	}
+
+	public double getSignal() {
+		return (this.signal); 
+	}
+
+    @Override
+    public String toString() {
+        return getDDate().toString() + "," + value + "," + signal;
+    }
+
+
+	
+}

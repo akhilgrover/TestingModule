@@ -1,0 +1,287 @@
+package datasource;
+
+import Share.ShareComparator;
+import Share.ShareList;
+import indicator.IndicatorField;
+import indicator.IndicatorList;
+import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Date;
+import javolution.util.FastComparator;
+import javolution.util.FastMap;
+
+public class ShareListDB {
+
+    private HashMap<String,ShareList> slist;
+    private Connection con;
+    private Statement stmt;
+    //private ResultSet rs;
+    private BasicShareDB bsdb;
+    private SimpleDateFormat sdf=new SimpleDateFormat("yyyy/MM/dd");
+
+    /**
+     * Method ShareListDB
+     *
+     *
+     * @throws Exception
+     */
+    public ShareListDB() throws Exception
+    {
+        //Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+         Class.forName("net.sourceforge.jtds.jdbc.Driver");
+         con = DriverManager.getConnection("jdbc:jtds:sqlserver://jeysql;user=BackTradeData;password=oracle");
+        //con = DriverManager.getConnection("jdbc:odbc:BackTestNew","","");
+
+        slist=new HashMap<String,ShareList>();//.shared().setKeyComparator(FastComparator.STRING);
+        bsdb=new BasicShareDB();
+        stmt=con.createStatement();
+    }
+
+    public HashMap getShareListData(String group) throws Exception
+    {
+        //stmt=con.createStatement();
+        String sql="Select rtrim(code) from groups where list='"+group+"'";
+        ResultSet rs=stmt.executeQuery(sql);
+        while(rs.next())
+        {
+            String code=rs.getString(1).intern();
+            slist.put(code,bsdb.getShareData(code));
+        }
+        rs.close();
+        return slist;
+    }
+
+    /**
+     *
+     * @param index
+     *  Index to use FTSE or GSPC etc
+     * @param dd
+     *  date to check for the trade
+     * @return
+     *  returns the list of shares
+     * @throws java.lang.Exception
+     *  Sql Exception catch
+     */
+    public ArrayList getShareOnDate(String index,Date dd) throws Exception
+    {
+        //stmt=con.createStatement();
+        //SimpleDateFormat sdf=new SimpleDateFormat("yyyy/MM/dd");
+        //String sql="Select TOP 100 code from indices where index='"+index+"' and date<=#"+sdf.format(dd)+"# ORDER BY  indices.Date DESC,code;";
+        String sql="SELECT rtrim(indices.code) FROM indices WHERE (((indices.Date)=(SELECT TOP 1 indices.Date FROM indices where indices.[index]='"+index+"' GROUP BY indices.Date HAVING (((indices.Date)<='"+sdf.format(dd)+"')) ORDER BY indices.Date DESC)) AND ((indices.[Index])='"+index+"')) ORDER BY indices.code;";
+        //String sql="SELECT indices.code FROM Shares INNER JOIN indices ON Shares.Code = indices.code WHERE (((indices.Date)=(SELECT TOP 1 indices.Date FROM indices GROUP BY indices.Date HAVING (((indices.Date)<=#"+sdf.format(dd)+"#)) ORDER BY indices.Date DESC)) AND ((Shares.ShareDate)=#"+sdf.format(dd)+"#) AND ((indices.Index)='"+index+"')) ORDER BY indices.code;";
+        ResultSet rs=stmt.executeQuery(sql);
+        ArrayList arr=new ArrayList(100);
+        //HashMap arr=new HashMap(100);
+        while(rs.next())
+        {
+            String code=rs.getString(1).intern();
+            arr.add(code);
+            //arr.put(code,bsdb.getShareData(code));
+        }
+        rs.close();
+        return arr;
+    }
+
+    /**
+     *
+     * @param index
+     *  Index to use FTSE or GSPC etc
+     * @param dd
+     *  date to check for the trade
+     * @param sc
+     * @return
+     *  returns the list of shares
+     * @throws java.lang.Exception
+     *  Sql Exception catch
+     */
+    public TreeMap getShareOnDate(String index,Date dd,ShareComparator sc) throws Exception
+    {
+        //stmt=con.createStatement();
+        //SimpleDateFormat sdf=new SimpleDateFormat("yyyy/MM/dd");
+        //String sql="Select TOP 100 code from indices where index='"+index+"' and date<=#"+sdf.format(dd)+"# ORDER BY  indices.Date DESC,code;";
+        String sql="SELECT rtrim(indices.code) FROM indices WHERE (((indices.Date)=(SELECT TOP 1 indices.Date FROM indices where indices.[index]='"+index+"' GROUP BY indices.Date HAVING (((indices.Date)<='"+sdf.format(dd)+"')) ORDER BY indices.Date DESC)) AND ((indices.[index])='"+index+"')) ORDER BY indices.code;";
+        //String sql="SELECT indices.code FROM Shares INNER JOIN indices ON Shares.Code = indices.code WHERE (((indices.Date)=(SELECT TOP 1 indices.Date FROM indices GROUP BY indices.Date HAVING (((indices.Date)<=#"+sdf.format(dd)+"#)) ORDER BY indices.Date DESC)) AND ((Shares.ShareDate)=#"+sdf.format(dd)+"#) AND ((indices.Index)='"+index+"')) ORDER BY indices.code;";
+        ResultSet rs=stmt.executeQuery(sql);
+        //ArrayList arr=new ArrayList(100);
+        TreeMap<String,Integer> arr=new TreeMap<String, Integer>(sc);
+        int i=0;
+        while(rs.next())
+        {
+            String code=rs.getString(1).intern();
+            arr.put(code,i++);
+            //arr.put(code,bsdb.getShareData(code));
+        }
+        rs.close();
+        return arr;
+    }
+
+    public ArrayList getShareOnDate(ShareList sl, Date dd, int backPeriod, int shareCount, boolean sell) throws Exception
+    {
+        //SimpleDateFormat sdf=new SimpleDateFormat("yyyy/MM/dd");
+        String index=sl.getShare();
+        int back=sl.isDatePresent(dd)-backPeriod;
+        if(back<0)
+            back=sl.getSize()-backPeriod;
+
+        String sql="SELECT top("+shareCount+")    Indices.code " +
+                " FROM         Shares AS Shares_1 INNER JOIN" +
+                "                      Shares INNER JOIN" +
+                "                      Indices ON Shares.Code = Indices.code ON Shares_1.Code = Indices.code " +
+                "WHERE     [index]='"+index+"' and (Indices.Date = (SELECT    top 1 Date " +
+                "FROM         Indices " +
+                "WHERE     [INDEX] = '"+index+"' AND date <= '"+sdf.format(dd)+"' " +
+                "order by date desc)) AND (Shares.ShareDate = '"+sdf.format(dd)+"') AND (Shares_1.ShareDate = '"+sdf.format(sl.getSharedata(back).getDate())+"') " +
+                "ORDER BY (Shares.[Close] - Shares_1.[Close]) / Shares_1.[Close] * 100";
+        if(!sell)
+              sql+=  " DESC";
+        else
+              sql+=  " ASC";
+        ResultSet rs=stmt.executeQuery(sql);
+        //ArrayList arr=new ArrayList(100);
+        ArrayList arr=new ArrayList(shareCount);
+        int i=0;
+        while(rs.next())
+        {
+            String code=rs.getString(1).intern();
+            arr.add(code);
+            //arr.put(code,bsdb.getShareData(code));
+        }
+        rs.close();
+        return arr;
+    }
+
+    public synchronized ArrayList<String> getShareOnDateExclude(ShareList sl, Date dd, int backPeriod, int shareCount, boolean sell) throws Exception
+    {
+        String index=sl.getShare();
+        int back=sl.isDatePresent(dd)-backPeriod;
+        if(back<0)
+            back=sl.getSize()-backPeriod;
+        String comb="",comp="",cls="close";
+        String invest="";
+        if(index.equals("ASX"))
+        {
+            comb="Combined";
+            comp="Complete";
+            cls="close1";
+            //invest=" and Indices"+comb+".code NOT IN (SELECT code FROM completelist WHERE (list = 'investment trust')) ";
+        }
+        //shareCount=shareCount+10;
+        String oSQL="select top("+shareCount+") code from DailyIndices "
+                + "where tDate='"+sdf.format(dd)+"' and backperiod="+backPeriod
+                + "and base='"+index+"' order by profit";
+        if(!sell)
+              oSQL+=  " DESC";
+        else
+              oSQL+=  " ASC";
+        oSQL+= ",code";
+        ResultSet rs=stmt.executeQuery(oSQL);
+        //ArrayList arr=new ArrayList(100);
+        ArrayList<String> arr=new ArrayList<String>(shareCount);
+        while(rs.next())
+        {
+            String code=rs.getString(1).intern();
+            arr.add(code.intern());
+            //arr.put(code,bsdb.getShareData(code));
+        }
+        rs.close();
+        Date cur=sdf.parse(sdf.format(new Date()));
+        if(arr.isEmpty() || dd.equals(cur))
+        {
+            String sql="SELECT top("+shareCount+")    Indices"+comb+".code " +
+                    " FROM         Shares"+comp+" AS Shares_1 INNER JOIN" +
+                    "                      Shares"+comp+" INNER JOIN" +
+                    "                      Indices"+comb+" ON Shares"+comp+".Code = Indices"+comb+".code ON Shares_1.Code = Indices"+comb+".code " +
+                    "WHERE     [index]='"+index+"' and (Indices"+comb+".Date = (SELECT    top 1 Date " +
+                    "FROM         Indices"+comb+" " +
+                    "WHERE     [INDEX] = '"+index+"' AND date <= '"+sdf.format(dd)+"' " +
+                    "order by date desc)) AND (Shares"+comp+".ShareDate = '"+sdf.format(dd)+"') AND (Shares_1.ShareDate = '"+sdf.format(sl.getSharedata(back).getDate())+"') "
+                    + invest
+                    + "AND (Indices"+comb+".code NOT IN"
+                    + "                          (SELECT     code"
+                    + "                            FROM          TakeOvers"
+                    + "                            WHERE      (eDate <= '"+sdf.format(dd)+"')))" +
+                    " ORDER BY ((Shares"+comp+".["+cls+"] - Shares_1.["+cls+"])*1.0) / Shares_1.["+cls+"] * 100";
+            if(!sell)
+                  sql+=  " DESC";
+            else
+                  sql+=  " ASC";
+            String sqlNew="";
+            if(dd.equals(cur))
+                sqlNew="delete from dailyindices where tdate='"+sdf.format(dd)+"' and base='"+ index +"' and backperiod="+backPeriod+";";
+            if(dd.before(cur)){
+             sqlNew+="Insert into DailyIndices " +
+                    " SELECT shares"+comp+".sharedate,"+backPeriod+",Indices"+comb+".code,((Shares"+comp+".["+cls+"] - Shares_1.["+cls+"])*1.0) / Shares_1.["+cls+"] * 100,'"+ index +"' " +
+                    " FROM         Shares"+comp+" AS Shares_1 INNER JOIN" +
+                    "                      Shares"+comp+" INNER JOIN" +
+                    "                      Indices"+comb+" ON Shares"+comp+".Code = Indices"+comb+".code ON Shares_1.Code = Indices"+comb+".code " +
+                    "WHERE     [index]='"+index+"' and (Indices"+comb+".Date = (SELECT    top 1 Date " +
+                    "FROM         Indices"+comb+" " +
+                    "WHERE     [INDEX] = '"+index+"' AND date <= '"+sdf.format(dd)+"' " +
+                    "order by date desc)) AND (Shares"+comp+".ShareDate = '"+sdf.format(dd)+"') AND (Shares_1.ShareDate = '"+sdf.format(sl.getSharedata(back).getDate())+"') "
+                    + invest
+                    + "AND (Indices"+comb+".code NOT IN"
+                    + "                          (SELECT     code"
+                    + "                            FROM          TakeOvers"
+                    + "                            WHERE      (eDate <= '"+sdf.format(dd)+"')))" +
+                    " ORDER BY ((Shares"+comp+".["+cls+"] - Shares_1.["+cls+"])*1.0) / Shares_1.["+cls+"] * 100";
+            }
+            rs=stmt.executeQuery(sql);
+
+            //ArrayList arr=new ArrayList(100);
+            arr=new ArrayList<String>(shareCount);
+            while(rs.next())
+            {
+                String code=rs.getString(1).intern();
+                arr.add(code.intern());
+                //arr.put(code,bsdb.getShareData(code));
+            }
+            rs.close();
+            if(dd.before(cur)){
+                stmt.executeUpdate(sqlNew);
+            }
+        }
+        //return new ArrayList<String>(arr.subList(10, arr.size()));
+        return arr;
+    }
+
+    public void addShareToList(String code) throws Exception
+    {
+        if(!slist.containsKey(code))
+        {
+            slist.put(code,bsdb.getShareData(code));
+        }
+    }
+
+    public HashMap getShareList()
+    {
+        return slist;
+    }
+
+    public void close() throws SQLException
+    {
+        if(bsdb!=null)
+            bsdb.close();
+        if(con!=null)
+            con.close();
+        slist=null;
+        con=null;
+        stmt=null;
+        //rs=null;
+        System.gc();
+    }
+
+    public IndicatorList getIndicatorList(String pair,Date d1,Date d2,String ind) throws SQLException {
+        String sql="select b.dt,b.indvalue from pairidl3master as a inner join pairidl3 as b on a.id=b.id"
+                + " where a.idlkey='"+ind+"' and a.pair='"+ pair +"' and dt between '"+ sdf.format(d1) +"' and '"+ sdf.format(d2) +"'";
+        ResultSet rs=stmt.executeQuery(sql);
+        IndicatorList il=new IndicatorList();
+        int i=0;
+        while(rs.next())
+        {
+            il.addIndField(new IndicatorField(rs.getDate(1), rs.getDouble(2), 0));
+        }
+        rs.close();
+        return il;
+    }
+}

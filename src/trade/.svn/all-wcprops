@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/BackTestModule/!svn/ver/7/trunk/src/trade
+END
+Trade.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/Trade.java
+END
+TradeParameters.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/TradeParameters.java
+END
+TradeProfit.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/TradeProfit.java
+END
+TradeCalculator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/TradeCalculator.java
+END
+TradeList.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/TradeList.java
+END

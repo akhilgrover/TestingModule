@@ -1,0 +1,185 @@
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator
+END
+AbstractIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/AbstractIndicator.java
+END
+MacdIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/MacdIndicator.java
+END
+CorrelationSIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/CorrelationSIndicator.java
+END
+DmiIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/DmiIndicator.java
+END
+PvtIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/PvtIndicator.java
+END
+BaseIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/BaseIndicator.java
+END
+MfiIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/MfiIndicator.java
+END
+IndicatorList.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/IndicatorList.java
+END
+BetaIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/BetaIndicator.java
+END
+TrendIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/TrendIndicator.java
+END
+VolatilitypairIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/VolatilitypairIndicator.java
+END
+CorrelationIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/CorrelationIndicator.java
+END
+IndicatorField.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/IndicatorField.java
+END
+VerticalHorizontalIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/VerticalHorizontalIndicator.java
+END
+IndicatorDB.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/IndicatorDB.java
+END
+AlphaIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/AlphaIndicator.java
+END
+TemaIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/TemaIndicator.java
+END
+TrixIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/TrixIndicator.java
+END
+RmiIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/RmiIndicator.java
+END
+InertiaIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/InertiaIndicator.java
+END
+NviIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/NviIndicator.java
+END
+IndicatorGroup.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/IndicatorGroup.java
+END
+RangeIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/RangeIndicator.java
+END
+MaIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/MaIndicator.java
+END
+ForcastOscillatorIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/ForcastOscillatorIndicator.java
+END
+RsiIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/RsiIndicator.java
+END
+PviIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/PviIndicator.java
+END
+DpOscillatorIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/DpOscillatorIndicator.java
+END
+RviIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/2/trunk/src/indicator/RviIndicator.java
+END
+VolatilityIndicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/BackTestModule/!svn/ver/12/trunk/src/indicator/VolatilityIndicator.java
+END

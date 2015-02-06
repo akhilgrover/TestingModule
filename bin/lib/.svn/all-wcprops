@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib
+END
+jtds-1.2.4.jar
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/jtds-1.2.4.jar
+END
+nblibraries.properties
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/nblibraries.properties
+END
+jxl.jar
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/jxl.jar
+END
+ehcache-1.6.1.jar
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/ehcache-1.6.1.jar
+END
+jtds-1.2.jar
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/BackTestModule/!svn/ver/2/trunk/bin/lib/jtds-1.2.jar
+END

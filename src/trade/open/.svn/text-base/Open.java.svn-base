@@ -1,0 +1,26 @@
+package trade.open;
+
+import indicator.*;
+import Share.*;
+import java.util.HashMap;
+import trade.*;
+import trade.filter.*;
+
+public interface Open
+{
+    public TradeList fillOpen(IndicatorList indList,ShareList sl,Filters filter);
+	
+    @Override
+	public String toString();
+    
+    public int getParamCount();
+    
+    public HashMap getParams();
+    
+    public int getBuy();
+    
+    public void setParams(HashMap param);
+    
+    public void setBuy(int buy);
+          
+}

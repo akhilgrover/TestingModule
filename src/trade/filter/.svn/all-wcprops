@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter
+END
+RsiThresholdFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/BackTestModule/!svn/ver/10/trunk/src/trade/filter/RsiThresholdFilter.java
+END
+MaFilterOpp.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter/MaFilterOpp.java
+END
+TrendFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter/TrendFilter.java
+END
+MaFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/BackTestModule/!svn/ver/12/trunk/src/trade/filter/MaFilter.java
+END
+MACDThresholdFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter/MACDThresholdFilter.java
+END
+Filters.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter/Filters.java
+END
+MACDSignalFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter/MACDSignalFilter.java
+END
+AbstractFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter/AbstractFilter.java
+END
+TemaFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter/TemaFilter.java
+END
+DaysPercentChangeFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/BackTestModule/!svn/ver/10/trunk/src/trade/filter/DaysPercentChangeFilter.java
+END
+InertiaThresholdFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter/InertiaThresholdFilter.java
+END
+MaCustomFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/BackTestModule/!svn/ver/2/trunk/src/trade/filter/MaCustomFilter.java
+END

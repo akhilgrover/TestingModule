@@ -1,0 +1,143 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package Summary.SummaryFilter;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import report.Summary;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.TreeMap;
+
+/**
+ *
+ * @author admin
+ */
+public class SummaryFilter implements Serializable
+{
+    LinkedList<BasicFilter> filters;
+
+    public SummaryFilter() {
+        filters=new LinkedList<BasicFilter>();
+    }
+
+    public void addFilter(BasicFilter filter)
+    {
+        filters.add(filter);
+    }
+
+    public Collection<Summary> filter(Collection<Summary> list) throws Exception
+    {
+        LinkedList<Summary> retList=new LinkedList<Summary>();
+        //Iterator<Summary> itr=list.iterator();
+        for(Summary sum:list)
+        {
+            //Summary sum=itr.next();
+            boolean add=true;
+            for(BasicFilter bf:filters)
+            {
+                add=(add && bf.isValid(sum));
+            }
+            if(add)
+            {
+                retList.add(sum);
+            }
+        }
+        //list.clear();
+        return retList;
+    }
+
+    public static TreeMap group(LinkedList<Summary> list,String key) throws Exception
+    {
+
+        TreeMap<Object,LinkedList<Summary>> retList=new TreeMap<Object, LinkedList<Summary>>(new StringComparitor());
+        for(Summary sum:list)
+        {
+            Class cls=sum.getClass();
+            Method mtd=cls.getMethod(key,null);
+            Object obj=mtd.invoke(sum, null);
+            String k="0";
+            if(obj!=null)
+                k=obj.toString();
+            if(retList.containsKey(k))
+                retList.get(k).add(sum);
+            else
+            {
+                LinkedList<Summary> nList=new LinkedList<Summary>();
+                nList.add(sum);
+                retList.put(k, nList);
+            }
+        }
+        return retList;
+    }
+
+    public static TreeMap group(LinkedList<Summary> list, String key, String key1) throws Exception
+    {
+
+        TreeMap<Object,LinkedList<Summary>> retList=new TreeMap<Object, LinkedList<Summary>>(new StringComparitor());
+        for(Summary sum:list)
+        {
+            Class cls=sum.getClass();
+            Method mtd=cls.getMethod(key,null);
+            Object obj=mtd.invoke(sum, null);
+
+            Method mtd1=cls.getMethod(key1,null);
+            Object obj1=mtd1.invoke(sum, null);
+
+            String k="0";
+            if(obj!=null)
+                k=obj.toString();
+            if(obj1!=null)
+                k+=","+obj1.toString();
+            if(retList.containsKey(k))
+                retList.get(k).add(sum);
+            else
+            {
+                LinkedList<Summary> nList=new LinkedList<Summary>();
+                nList.add(sum);
+                retList.put(k, nList);
+            }
+        }
+        return retList;
+    }
+
+    public static TreeMap group(LinkedList<Summary> list, String key, String key1, String key2) throws Exception
+    {
+
+        TreeMap<Object,LinkedList<Summary>> retList=new TreeMap<Object, LinkedList<Summary>>(new StringComparitor());
+        for(Summary sum:list)
+        {
+            Class cls=sum.getClass();
+            Method mtd=cls.getMethod(key,null);
+            Object obj=mtd.invoke(sum, null);
+
+            Method mtd1=cls.getMethod(key1,null);
+            Object obj1=mtd1.invoke(sum, null);
+
+            Method mtd2=cls.getMethod(key2,null);
+            Object obj2=mtd2.invoke(sum, null);
+
+            String k="0";
+            if(obj!=null)
+                k=obj.toString();
+            if(obj1!=null)
+                k+=","+obj1.toString();
+            if(obj2!=null)
+                k+=","+obj2.toString();
+            if(retList.containsKey(k))
+                retList.get(k).add(sum);
+            else
+            {
+                LinkedList<Summary> nList=new LinkedList<Summary>();
+                nList.add(sum);
+                retList.put(k, nList);
+            }
+        }
+        return retList;
+    }
+}

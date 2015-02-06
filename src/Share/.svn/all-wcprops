@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/BackTestModule/!svn/ver/2/trunk/src/Share
+END
+DividendData.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/BackTestModule/!svn/ver/2/trunk/src/Share/DividendData.java
+END
+DividendList.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/BackTestModule/!svn/ver/12/trunk/src/Share/DividendList.java
+END
+ShareComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/BackTestModule/!svn/ver/2/trunk/src/Share/ShareComparator.java
+END
+ShareData.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/BackTestModule/!svn/ver/12/trunk/src/Share/ShareData.java
+END
+ShareList.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/BackTestModule/!svn/ver/12/trunk/src/Share/ShareList.java
+END

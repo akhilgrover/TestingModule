@@ -1,0 +1,1195 @@
+package trade;
+
+import indicator.*;
+import Share.*;
+import datasource.BasicShareDB;
+import datasource.ShareListDB;
+import java.io.Serializable;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javolution.util.FastComparator;
+import trade.close.*;
+import trade.filter.*;
+import trade.open.*;
+import javolution.util.FastMap;
+import ma.MA;
+
+/**
+ *
+ * @author admin
+ */
+public class TradeCalculator implements Serializable
+{
+
+    private transient HashMap<String,ShareList> shList;
+    private transient HashMap<String,IndicatorList> indList;
+    private transient HashMap<Date,ArrayList> shDayList;
+    private transient HashMap<String,DividendList> divList;
+    private transient ShareListDB shareDB;
+    private transient BasicShareDB bsDB;
+    private transient SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
+
+    public TradeCalculator() throws Exception
+    {
+        /*shList=new FastMap<String, ShareList>().setKeyComparator(FastComparator.STRING);
+        indList=new FastMap<String, IndicatorList>().setKeyComparator(FastComparator.STRING);
+        shDayList=new FastMap<Date, ArrayList>().setKeyComparator(FastComparator.IDENTITY);
+        divList=new FastMap<String, DividendList>().setKeyComparator(FastComparator.STRING);*/
+//        shList=FastMap.newInstance();
+//        indList=FastMap.newInstance();
+//        shDayList=FastMap.newInstance();
+//        divList=FastMap.newInstance();
+        shList=new HashMap<String, ShareList>(270);
+        indList=new HashMap<String, IndicatorList>(1500);
+        shDayList=new HashMap<Date, ArrayList>(5000);
+        divList=new HashMap<String, DividendList>(190);
+        shareDB=new ShareListDB();
+        bsDB=new BasicShareDB();
+    }
+
+    public void refresh() throws Exception
+    {
+        if(shareDB!=null)
+            shareDB.close();
+        if(bsDB!=null)
+            bsDB.close();
+//        FastMap.recycle(shList);
+//        FastMap.recycle(indList);
+//        FastMap.recycle(shDayList);
+//        FastMap.recycle(divList);
+//        shList=FastMap.newInstance();
+//        indList=FastMap.newInstance();
+//        shDayList=FastMap.newInstance();
+//        divList=FastMap.newInstance();
+        shList.clear();
+        indList.clear();
+        shDayList.clear();
+        divList.clear();
+
+        shareDB=new ShareListDB();
+        bsDB=new BasicShareDB();
+    }
+
+    public void close() throws Exception
+    {
+        if(shareDB!=null)
+            shareDB.close();
+        if(bsDB!=null)
+            bsDB.close();
+        if(shList!=null)
+            shList.clear();
+        if(indList!=null)
+            indList.clear();
+        if(shDayList!=null)
+            shDayList.clear();
+        if(divList!=null)
+            divList.clear();
+        //FastMap.recycle(shList);
+        shList=null;
+        //FastMap.recycle(indList);
+        indList=null;
+        //FastMap.recycle(shDayList);
+        shDayList=null;
+        //FastMap.recycle(divList);
+        divList=null;
+        //shList.clear();
+        //shDayList.clear();
+    }
+
+
+    /**
+     * Calculate the trades for a single function.
+     * 1: calculate open trades
+     * 2: calculated closes for the open.
+     * return the trade list.
+     *
+     * @param indList
+     *  Indicator list to be used to calculate trades.
+     * @param indCloseList
+     * @param sl
+     *  Share list to calculate the trades on.
+     * @param open
+     *  Open class to calculate open trades. an implementation of open interface
+     *  is used.
+     * @param openFilter
+     *  A Filter implementing Filters interface used to filter open trades.
+     * @param close
+     *  A Close calculating class implementing Close interface.
+     * @param closeFilter
+     *  A Filter implementing Filters interface used to filter Close trades.
+     * @return
+     *  Returns the Trade List for the given function with an open
+     *  and close parameter pair
+     *
+     */
+    public TradeList getTrades(IndicatorList indList,IndicatorList indCloseList,ShareList sl,Open open,Filters openFilter,Close close,Filters closeFilter)
+    {
+        TradeList tl,tlfinal;
+        shList.put(sl.getShare(), sl);
+        tl=open.fillOpen(indList,sl,openFilter);
+        if(indCloseList==null)
+            tlfinal=close.fillClose(tl,indList,sl,closeFilter);
+        else
+        {
+            if(close instanceof ThresholdOrDaysCutCloseSL)
+            {
+                ThresholdOrDaysCutCloseSL tclose=(ThresholdOrDaysCutCloseSL) close;
+                tlfinal=tclose.fillClose(tl,indCloseList,indList,sl,closeFilter);
+            }
+            else
+                tlfinal=close.fillClose(tl,indCloseList,sl,closeFilter);
+        }
+        setTradeShare(tlfinal,sl.getShare());
+        return tlfinal;
+    }
+
+    public ArrayList getRanksOn(ShareList sl,Date d,int days, int topShares, boolean sell) throws Exception{
+        ArrayList arr=null;
+        if (shDayList.containsKey(d)) {
+            arr = shDayList.get(d);
+        }
+        //arr=null;
+        if (arr == null) {
+            try {
+                arr = shareDB.getShareOnDateExclude(sl, d, days, topShares + 20, sell);
+            } catch (SQLException exSql) {
+                shareDB.close();
+                shareDB = new ShareListDB();
+                arr = shareDB.getShareOnDateExclude(sl, d, days, topShares + 20, sell);
+
+            } catch (Exception exSql) {
+                shareDB.close();
+                shareDB = new ShareListDB();
+                arr = shareDB.getShareOnDateExclude(sl, d, days, topShares + 20, sell);
+
+            }
+            //arr=shareDB.getShareOnDate(sl, trd.getStartDate(),days,topShares,sell);
+//                if(shDayList.size()>4000)
+//                    System.out.println(shDayList.size());
+            shDayList.put(d, arr);
+        }
+        return arr;
+    }
+
+    public TradeList getTrades(TradeList tl,ShareList sl,HashMap top,boolean sell)
+            throws Exception
+    {
+        TradeList trdlist=new TradeList();
+        int days = 0,topShares = 0;
+        ArrayList arr = null;
+        if(top.containsKey("topShares"))
+        {
+            days=(Integer)top.get("shareDays");
+            topShares=(Integer)top.get("topShares");
+        }
+        for(int i=0;i<tl.getSize();i++)
+        {
+            Trade trd=tl.getTrade(i);
+            if(shDayList.containsKey(trd.getStartDate()))
+                arr=shDayList.get(trd.getStartDate());
+            //arr=null;
+            if(arr==null)
+            {
+                try{
+
+                arr=shareDB.getShareOnDateExclude(sl, trd.getStartDate(),days,topShares+20,sell);
+                }
+                catch(SQLException exSql)
+                {
+                    shareDB.close();
+                    shareDB=new ShareListDB();
+                    arr=shareDB.getShareOnDateExclude(sl, trd.getStartDate(),days,topShares+20,sell);
+
+                }
+                catch(Exception exSql)
+                {
+                    shareDB.close();
+                    shareDB=new ShareListDB();
+                    arr=shareDB.getShareOnDateExclude(sl, trd.getStartDate(),days,topShares+20,sell);
+
+                }
+                //arr=shareDB.getShareOnDate(sl, trd.getStartDate(),days,topShares,sell);
+//                if(shDayList.size()>4000)
+//                    System.out.println(shDayList.size());
+                shDayList.put(trd.getStartDate(), arr);
+            }
+            int count=0;
+
+            for(int j=0;count<topShares && j<arr.size();j++)
+            {
+                String sh=(String)arr.get(j);
+                ShareList sl1=getSL(sh,sl.getShare());
+
+                int st=sl1.isDatePresent(trd.getStartDate());
+                int end=sl1.isDatePresent(trd.getCloseDate());
+                if(end==-1)
+                    end=sl1.isLowerDatePresent(trd.getCloseDate());
+                if(sl.getShare().equals("ASX") && trd.getStartDate().after(sdf.parse("01/07/2000")) && !isLiquid(sl1,trd.getStartDate()) )
+                    continue;
+                if(st==-1)
+                    System.out.println("err,"+sh+","+sdf.format(trd.getStartDate()));
+                if(st>=0 && end>=0)
+                {
+//                    if(st+3<sl1.getSize())
+//                        st+=3;
+//                    if(end+1<sl1.getSize())
+//                        end+=1;
+                    ShareData sdstart=sl1.getSharedata(st);
+                    ShareData sdend=sl1.getSharedata(end);
+                    Trade newTrade=new Trade(sdstart.getDate(),sdstart.getClosePrice(),sdend.getDate(),sdend.getClosePrice());
+                    newTrade.setShare(sh);
+                    trdlist.addTrade(newTrade);
+                    count++;
+                }
+            }
+            if(count<topShares)
+                System.out.println("err");
+        }
+
+        //shDayList.clear();
+        return trdlist;
+    }
+
+    public TradeList getTrades(TradeList tl,ShareList sl,HashMap top,boolean sell, AbstractIndicator indicator,double threshold)
+            throws Exception
+    {
+        TradeList trdlist=new TradeList();
+        int days = 0,topShares = 0;
+        ArrayList arr = null;
+        if(top.containsKey("topShares"))
+        {
+            days=(Integer)top.get("shareDays");
+            topShares=(Integer)top.get("topShares");
+        }
+        for(int i=0;i<tl.getSize();i++)
+        {
+            Trade trd=tl.getTrade(i);
+            if(shDayList.containsKey(trd.getStartDate()))
+                arr=shDayList.get(trd.getStartDate());
+            else
+            {
+                try{
+
+                arr=shareDB.getShareOnDateExclude(sl, trd.getStartDate(),days,topShares+20,sell);
+                }
+                catch(SQLException exSql)
+                {
+                    shareDB.close();
+                    shareDB=new ShareListDB();
+                    arr=shareDB.getShareOnDateExclude(sl, trd.getStartDate(),days,topShares+20,sell);
+
+                }
+                catch(Exception exSql)
+                {
+                    shareDB.close();
+                    shareDB=new ShareListDB();
+                    arr=shareDB.getShareOnDateExclude(sl, trd.getStartDate(),days,topShares+20,sell);
+
+                }
+                //arr=shareDB.getShareOnDate(sl, trd.getStartDate(),days,topShares,sell);
+                shDayList.put(trd.getStartDate(), arr);
+            }
+            int count=0;
+            ArrayList<String> sharesDone=new ArrayList<String>();
+            for(int j=0;count<topShares && j<arr.size();j++)
+            {
+
+                String sh=(String)arr.get(j);
+                ShareList sl1=getSL(sh);
+                IndicatorList il=null;
+                if(indList.containsKey(sh+indicator.toString()))
+                {
+                    il=indList.get(sh+indicator.toString());
+                }
+                else
+                {
+                    il=indicator.buildIndicator(sl1);
+                    if(indList.size()>500)
+                        indList.clear();
+                        //indList=new HashMap<String, IndicatorList>();
+                    indList.put(sh+indicator.toString(), il);
+                }
+                int ind=il.isDatePresent(trd.getStartDate());
+                if(ind>-1)
+                {
+                    double val=il.getSharedata(ind).getValue();
+                    if(val>=threshold)
+                    {
+                        //System.out.println("Missed:" + sh);
+                        continue;
+                    }
+                    else
+                    {
+                        sharesDone.add(sh);
+                        //System.out.println("Not Missed," + sh + ","+val+","+trd.getStartDate());
+                    }
+                }
+                int st=sl1.isDatePresent(trd.getStartDate());
+                int end=sl1.isDatePresent(trd.getCloseDate());
+                if(end==-1)
+                    end=sl1.isLowerDatePresent(trd.getCloseDate());
+
+                if(st>=0 && end>=0)
+                {
+//                    if(st+5<sl1.getSize())
+//                        st+=5;
+//                    if(end+5<sl1.getSize())
+//                        end+=5;
+                    ShareData sdstart=sl1.getSharedata(st);
+                    ShareData sdend=sl1.getSharedata(end);
+                    Trade newTrade=new Trade(sdstart.getDate(),sdstart.getClosePrice(),sdend.getDate(),sdend.getClosePrice());
+                    newTrade.setShare(sh);
+                    trdlist.addTrade(newTrade);
+                    count++;
+                }
+            }
+            if(count!=topShares)
+            {
+                for(int j=0;count<topShares && j<arr.size();j++)
+                {
+
+                    String sh=(String)arr.get(j);
+                    if(sharesDone.contains(sh))
+                        continue;
+                    ShareList sl1=getSL(sh);
+
+                    int st=sl1.isDatePresent(trd.getStartDate());
+                    int end=sl1.isDatePresent(trd.getCloseDate());
+                    if(end==-1)
+                        end=sl1.isLowerDatePresent(trd.getCloseDate());
+
+                    if(st>=0 && end>=0)
+                    {
+    //                    if(st+5<sl1.getSize())
+    //                        st+=5;
+    //                    if(end+5<sl1.getSize())
+    //                        end+=5;
+                        ShareData sdstart=sl1.getSharedata(st);
+                        ShareData sdend=sl1.getSharedata(end);
+                        Trade newTrade=new Trade(sdstart.getDate(),sdstart.getClosePrice(),sdend.getDate(),sdend.getClosePrice());
+                        newTrade.setShare(sh);
+                        trdlist.addTrade(newTrade);
+                        count++;
+                    }
+                }
+                System.out.println("Error");
+            }
+        }
+        //shDayList.clear();
+        return trdlist;
+    }
+
+    public TradeList getTradeList(TradeParameters tp) throws Exception
+    {
+        ShareList sl=tp.getSl();
+        if(sl.getSize()==0)
+        {
+            if(shList.containsKey(sl.getShare()))
+            {
+                sl=(ShareList) shList.get(sl.getShare());
+            }
+            else
+            {
+                if(sl.getShare().contains(" "))
+                {
+                    String shares[]=sl.getShare().split(" ");
+                    int days=Integer.parseInt(shares[3]);
+                    MA ma = new MA(days, MA.Simple);
+                    try{
+                    sl= bsDB.getShareData(shares[0]+ " " + shares[1], shares[2],ma,false);
+                    }catch(SQLException ex)
+                    {
+                        bsDB.close();
+                        bsDB=new BasicShareDB();
+                        sl= bsDB.getShareData(shares[0]+ " " + shares[1], shares[2],ma,false);
+                    }
+                }
+                else
+                {
+                    sl=getSL(sl.getShare());
+                    //sl=bsDB.getShareData(sl.getShare());
+                }
+                shList.put(sl.getShare(), sl);
+            }
+            tp.setSl(sl);
+        }
+        ShareList closeSl=sl;
+        ShareList indSL=getSL(tp.getIndex());
+        /*if(shList.containsKey(tp.getIndex()))
+        {
+            indSL=(ShareList) shList.get(tp.getIndex());
+        }
+        else
+        {
+            indSL=bsDB.getShareData(tp.getIndex());
+        }*/
+        HashMap top=new HashMap();
+        if(tp.isTopShares())
+        {
+            top.put("shareDays",tp.getBackPeriod());
+            top.put("topShares",tp.getShareCount());
+        }
+        if(!sl.getShare().equals(tp.getCloseSL().getShare()))
+        {
+            if(tp.getCloseSL().getSize()==0)
+            {
+                if(shList.containsKey(tp.getCloseSL().getShare()))
+                {
+                    closeSl=(ShareList) shList.get(tp.getCloseSL().getShare());
+                }
+                else
+                {
+                    if(tp.getCloseSL().getShare().contains(" "))
+                    {
+                        String shares[]=tp.getCloseSL().getShare().split(" ");
+                        int days=Integer.parseInt(shares[3]);
+                        MA ma = new MA(days, MA.Simple);
+                        try{
+                        closeSl= bsDB.getShareData(shares[0]+ " " + shares[1], shares[2],ma,false);
+                        }catch(SQLException ex)
+                        {
+                            bsDB.close();
+                            bsDB=new BasicShareDB();
+                            closeSl= bsDB.getShareData(shares[0]+ " " + shares[1], shares[2],ma,false);
+                        }
+                    }
+                    else
+                        closeSl=getSL(tp.getCloseSL().getShare());//bsDB.getShareData(tp.getCloseSL().getShare());
+                    shList.put(tp.getCloseSL().getShare(), closeSl);
+                }
+                tp.setCloseSL(closeSl);
+            }
+            else
+                closeSl=tp.getCloseSL();
+
+        }
+        IndicatorList il=indList.get(sl.toString()+tp.getIndList().toString());
+        if(il==null)
+        {
+            if(indList.size()>500)
+                indList.clear();
+            il=tp.getIndList().buildIndicator(sl);
+            indList.put(sl.toString()+tp.getIndList().toString(), il);
+        }
+        IndicatorList ilC=indList.get(closeSl.toString()+tp.getIndCloseList().toString());
+        if(ilC==null)
+        {
+            if(indList.size()>500)
+                indList.clear();
+            ilC=tp.getIndCloseList().buildIndicator(closeSl);
+            indList.put(closeSl.toString()+tp.getIndCloseList().toString(), ilC);
+        }
+        //TradeList tlo=tp.getOpen().fillOpen(il,indSL,tp.getOpenFilter());
+        TradeList tlc= getTrades( il,ilC, indSL ,tp.getOpen(),tp.getOpenFilter(),tp.getClose(),null);
+        if(tp.getConsec()>0)
+        {
+            //tlo = tc.filterSingle(tlo,tlc, tp.getConsec());
+            tlc = filterSingle(tlc, tp.getConsec());
+            //TradeList tlotst = tc.filterSingle(tlo,tlc,indSL, tp.getConsec());
+            //if(tlo.getSize()!=tlotst.getSize())
+            //    System.out.println(tlo.getSize() + " error " + tlotst.getSize());
+        }
+        if(tp.getIndStop()>0)
+            tlc=stopLossTradeList(tlc, tp.getIndStop(), !tp.isBuy());
+        if(tp.isTopShares())
+            tlc=getTrades(tlc, indSL, top,!tp.isBuy());
+        if(tp.getShareStop()>0)
+            tlc=stopLossTradeList(tlc, tp.getShareStop(), !tp.isBuy());
+        int buy=1;
+        if(!tp.isBuy())
+            buy=0;
+        tlc=calcDividendTrades(tlc, buy,tp.getShareCount());
+        return tlc;
+    }
+
+    public TradeList indicatorStopTradeList(TradeList oldTL,IndividualClose iclose,boolean sell) throws Exception
+    {
+        TradeList tl=new TradeList();
+        RsiIndicator rsi=new RsiIndicator();
+        HashMap hm=new HashMap();
+        hm.put(1, iclose.getParams().get(1));
+        hm.put(2, 1);
+        rsi.init(hm);
+        for(int i=0;i<oldTL.getSize();i++)
+        {
+            Trade trd=oldTL.getTrade(i);
+            Trade nTrd=indicatorStopTrade(trd,rsi,Double.parseDouble(iclose.getParams().get(2).toString()),sell,(Integer)iclose.getParams().get(3));
+            tl.addTrade(nTrd);
+        }
+        return tl;
+    }
+
+    public TradeList stopProfitTradeList(TradeList oldTL, double stopProfit,boolean sell) throws Exception
+    {
+        TradeList tl=new TradeList();
+        for(int i=0;i<oldTL.getSize();i++)
+        {
+            Trade trd=oldTL.getTrade(i);
+            Trade nTrd=stopProfitTrade(trd,stopProfit,sell);
+            tl.addTrade(nTrd);
+        }
+        return tl;
+    }
+
+    public TradeList stopLossTradeList(TradeList oldTL, double stopLoss,boolean sell) throws Exception
+    {
+        TradeList tl=new TradeList();
+        for(int i=0;i<oldTL.getSize();i++)
+        {
+            Trade trd=oldTL.getTrade(i);
+            Trade nTrd=stopLossTrade(trd,stopLoss,sell);
+            tl.addTrade(nTrd);
+        }
+        return tl;
+    }
+
+    private Trade stopLossTrade(Trade trd, double stopLoss,boolean sell) throws Exception
+    {
+        String share=trd.getShare();
+        ShareList tsl= getSL(share);
+//        if(shList.containsKey(share))
+//        {
+//            tsl=(ShareList) shList.get(share);
+//        }
+//        else
+//        {
+//            tsl=bsDB.getShareData(share);
+//            shList.put(share, tsl);
+//        }
+        int start=tsl.isDatePresent(trd.getStartDate())+1;
+        int end=tsl.isDatePresent(trd.getCloseDate());
+        Trade newTrade = new Trade(trd.getStartDate(), trd.getStartPrice(), trd.getCloseDate(), trd.getClosePrice());
+
+        double profit=((trd.getClosePrice()-trd.getStartPrice())/trd.getStartPrice())*100;
+        if(sell)
+        {
+            profit=((trd.getStartPrice()-trd.getClosePrice())/trd.getStartPrice())*100;
+        }
+        if(start>=1 && end>=1 && end<=tsl.getSize()-1)
+        {
+            for(int i=start;i<=end;i++)
+            {
+                ShareData sdend=tsl.getSharedata(i);
+                double prof=((sdend.getClosePrice()-trd.getStartPrice())/trd.getStartPrice())*100;
+                if(sell)
+                {
+                    prof=((trd.getStartPrice()-sdend.getClosePrice())/trd.getStartPrice())*100;
+                }
+                if(prof<=(stopLoss*-1))
+                {
+                    newTrade = new Trade(trd.getStartDate(), trd.getStartPrice(), sdend.getDate(), sdend.getClosePrice());
+                    profit=prof;
+                    break;
+                }
+
+            }
+        }
+        newTrade.setShare(trd.getShare());
+        if(!trd.isValid())
+        {
+            profit=0;
+            newTrade.setIsValid(false);
+        }
+        newTrade.setProfit(profit);
+        return newTrade;
+    }
+
+    private Trade stopProfitTrade(Trade trd, double stopProfit,boolean sell) throws Exception
+    {
+        String share=trd.getShare();
+        ShareList tsl= getSL(share);
+        int start=tsl.isDatePresent(trd.getStartDate())+1;
+        int end=tsl.isDatePresent(trd.getCloseDate());
+        Trade newTrade = new Trade(trd.getStartDate(), trd.getStartPrice(), trd.getCloseDate(), trd.getClosePrice());
+
+        double profit=((trd.getClosePrice()-trd.getStartPrice())/trd.getStartPrice())*100;
+        if(sell)
+        {
+            profit=((trd.getStartPrice()-trd.getClosePrice())/trd.getStartPrice())*100;
+        }
+        if(start>=1 && end>=1 && end<=tsl.getSize()-1)
+        {
+            for(int i=start;i<=end;i++)
+            {
+                ShareData sdend=tsl.getSharedata(i);
+                double prof=((sdend.getClosePrice()-trd.getStartPrice())/trd.getStartPrice())*100;
+                if(sell)
+                {
+                    prof=((trd.getStartPrice()-sdend.getClosePrice())/trd.getStartPrice())*100;
+                }
+                if(prof>=stopProfit)
+                {
+                    newTrade = new Trade(trd.getStartDate(), trd.getStartPrice(), sdend.getDate(), sdend.getClosePrice());
+                    profit=prof;
+                    break;
+                }
+
+            }
+        }
+        newTrade.setShare(trd.getShare());
+        if(!trd.isValid())
+        {
+            profit=0;
+            newTrade.setIsValid(false);
+        }
+        newTrade.setProfit(profit);
+        return newTrade;
+    }
+
+    private void setTradeShare(TradeList tlfinal,String share)
+    {
+        for(int i=0;i<tlfinal.getSize();i++)
+        {
+            Trade trd=tlfinal.getTrade(i);
+            trd.setShare(share);
+        }
+    }
+
+    public TreeMap<Date,Double> getIntraDayProfit(TradeList tl,int buy,int grps,ShareList indSL) throws Exception
+    {
+        TreeMap<Date,Double> dateprofit=new TreeMap<Date, Double>();
+        Date startD=tl.openDate();
+        Date clsD=tl.closeDate();
+        if(clsD!=null)
+        {
+            int startInd=indSL.isDatePresent(startD);
+            int endInd=indSL.isDatePresent(clsD);
+            for(int j=startInd+1;j<=endInd;j++)
+            {
+                for(int i=0;i<tl.getSize();i++)
+                {
+                    Trade trd=tl.getTrade(i);
+                    ShareList tsl= getSL(trd.getShare());
+                    int start=tsl.isDatePresent(trd.getStartDate());
+                    Date toEnd=indSL.getSharedata(j).getDate();
+                    if(toEnd.after(trd.getCloseDate()))
+                        toEnd=trd.getCloseDate();
+                    int end=tsl.isDatePresent(toEnd);
+                    if(end==-1)
+                        end=tsl.isLowerDatePresent(toEnd);
+
+
+                    if(start>=1 && end>=1 )//&& end<tsl.getSize()-1)
+                    {
+
+                        ShareData sdend=tsl.getSharedata(end);
+
+                        //Trade trdTemp=new Trade(trd.getStartDate(), trd.getStartPrice(), sdend.getDate(), sdend.getClosePrice());
+                        //trdTemp.setShare(trd.getShare());
+                        //double prof=calcDividendTrade(trdTemp,buy,grps).getProfit();
+
+                        double prof=calcDividendTrade(trd,sdend,buy,grps).getProfit();
+
+//                            if(toEnd.equals(sdf.parse("05/02/2010")))
+//                                System.out.println(trd.getStartDate()+","+trd.getStartPrice()+","+sdend.getDate()+","+sdend.getClosePrice()+","+prof+","+trd.getShare());
+
+                        Date actEnd=indSL.getSharedata(j).getDate();
+
+                        if(dateprofit.containsKey(actEnd))
+                            dateprofit.put(actEnd,prof+dateprofit.get(actEnd));
+                        else
+                            dateprofit.put(actEnd, prof);
+
+                    }
+                }
+            }
+        }
+        return dateprofit;
+    }
+
+    public TradeList calcDividendTrades(TradeList trdList,int buy,int grps) throws Exception
+    {
+        TradeList nTl= new TradeList();
+        for(int i=0;i<trdList.getSize();i++)
+        {
+            Trade trd=calcDividendTrade(trdList.getTrade(i),buy,grps);
+            nTl.addTrade(trd);
+        }
+        trdList=null;
+        return nTl;
+    }
+
+    public Trade calcDividendTrade(Trade oldTrd,ShareData sd,int buy,int grps) throws Exception
+    {
+        DividendList dl;
+//        if(!divList.containsKey(oldTrd.getShare()))
+//            divList.put(oldTrd.getShare(), bsDB.getDividendData(oldTrd.getShare()));
+        dl=getDL(oldTrd.getShare());
+        //DividendList dlRange1 = dl.getDividendDataRange(oldTrd.getStartDate(), oldTrd.getCloseDate());
+
+        //double sumRange1 = dl.getDividendDataRange(oldTrd.getStartDate(), oldTrd.getCloseDate()); neww
+        double sumRange1 = dl.getDividendDataRange(oldTrd.getStartDate(), sd.getDate());
+        //for(int j=0; j<dlRange1.getSize(); j++) {
+        //    sumRange1 = sumRange1 + dlRange1.getDividendData(j).getAmount();
+        //}
+        double divProfit = calcDividend(oldTrd.getStartPrice(), sumRange1, buy,grps);
+        //Trade trd=new Trade(oldTrd.getStartDate(), oldTrd.getStartPrice(), oldTrd.getCloseDate(), oldTrd.getClosePrice());
+        //trd.setShare(oldTrd.getShare());
+        double prft=calcProfit(oldTrd.getStartPrice(), sd.getClosePrice(), buy,grps);
+        oldTrd.setProfit(prft+divProfit);
+//        if(Math.abs((divProfit/(prft+divProfit))*100)>4)
+//            System.out.println(oldTrd.getShare() + "\t" + oldTrd.toString() + "\t" +divProfit);
+        return oldTrd;
+    }
+
+    public Trade calcDividendTrade(Trade oldTrd,int buy,int grps) throws Exception
+    {
+        DividendList dl;
+//        if(!divList.containsKey(oldTrd.getShare()))
+//            divList.put(oldTrd.getShare(), bsDB.getDividendData(oldTrd.getShare()));
+        dl=getDL(oldTrd.getShare());
+        //DividendList dlRange1 = dl.getDividendDataRange(oldTrd.getStartDate(), oldTrd.getCloseDate());
+
+        //double sumRange1 = dl.getDividendDataRange(oldTrd.getStartDate(), oldTrd.getCloseDate()); neww
+        double sumRange1 = dl.getDividendDataRange(oldTrd.getStartDate(), oldTrd.getCloseDate());
+        //for(int j=0; j<dlRange1.getSize(); j++) {
+        //    sumRange1 = sumRange1 + dlRange1.getDividendData(j).getAmount();
+        //}
+        double divProfit = calcDividend(oldTrd.getStartPrice(), sumRange1, buy,grps);
+        //Trade trd=new Trade(oldTrd.getStartDate(), oldTrd.getStartPrice(), oldTrd.getCloseDate(), oldTrd.getClosePrice());
+        //trd.setShare(oldTrd.getShare());
+        double prft=calcProfit(oldTrd.getStartPrice(), oldTrd.getClosePrice(), buy,grps);
+        oldTrd.setProfit(prft+divProfit);
+//        if(Math.abs((divProfit/(prft+divProfit))*100)>4)
+//            System.out.println(oldTrd.getShare() + "\t" + oldTrd.toString() + "\t" +divProfit);
+        return oldTrd;
+    }
+
+
+    public TradeList filterSingle(TradeList tl,int count)
+    {
+        TradeList newTl=new TradeList();
+
+        if(tl.getSize()>0)
+        {
+            Trade trdLast=tl.getTrade(0);
+            newTl.addTrade(trdLast);
+            int currCount=1;
+            for(int i=1;i<tl.getSize();i++)
+            {
+                Trade trd=tl.getTrade(i);
+
+                if(trd.getStartDate().after(trdLast.getCloseDate()))
+                {
+                    newTl.addTrade(trd);
+                    trdLast=trd;
+                    currCount=1;
+                }
+                else if(currCount<count)
+                {
+                    currCount++;
+                    newTl.addTrade(trd);
+                }
+            }
+        }
+        return newTl;
+
+    }
+
+    public TradeList filterSingle(TradeList tl,TradeList tlcls,int count)
+    {
+        TradeList newTl=new TradeList();
+
+        if(tl.getSize()>0 && tlcls.getSize()>0)
+        {
+            Trade trdLast=tlcls.getTrade(0);
+            newTl.addTrade(trdLast);
+            int currCount=1;
+            int nullCount=0;
+            for(int i=1;i<tl.getSize();i++)
+            {
+                Trade trd=tl.getTrade(i);
+                Trade trdcls=null;
+                if(i<=tlcls.getSize()-1)
+                    trdcls=tlcls.getTrade(i);
+                /*if(trdcls!=null && trd.getStartDate().equals(trdcls.getStartDate()))
+                {*/
+                    if(trd.getStartDate().after(trdLast.getCloseDate()))
+                    {
+                        newTl.addTrade(trd);
+                        if(trdcls!=null)
+                            trdLast=trdcls;
+                        else
+                        {
+                            nullCount++;
+                            //System.out.println(nullCount);
+                            if(nullCount>=count)
+                                break;
+                        }
+                        currCount=1;
+                    }
+                    else if(currCount<count)
+                    {
+                        currCount++;
+                        newTl.addTrade(trd);
+                    }
+                /*}
+                else
+                {
+
+                }*/
+            }
+        }
+        return newTl;
+
+    }
+
+    public TradeList filterSingle(TradeList tl,TradeList tlcls,ShareList sl,int count)
+    {
+        TradeList newTl=new TradeList();
+        TreeMap<Date,Integer> dailyList=new TreeMap<Date, Integer>();
+        if(tl.getSize()>0 && tlcls.getSize()>0)
+        {
+            for(int i=0;i<tlcls.getSize();i++)
+            {
+                Trade trd=tlcls.getTrade(i);
+                int start=sl.isDatePresent(trd.getStartDate());
+                int end=sl.isDatePresent(trd.getCloseDate());
+                for(int j=start;j<=end;j++)
+                {
+                    Date d=sl.getSharedata(j).getDate();
+                    int cnt=1;
+                    if(dailyList.containsKey(d))
+                        cnt=dailyList.get(d)+1;
+                    dailyList.put(d, cnt);
+                }
+            }
+            for(int i=0;i<tl.getSize();i++)
+            {
+                Trade trd=tl.getTrade(i);
+                int cnt=0;
+                if(dailyList.containsKey(trd.getStartDate()))
+                    cnt=dailyList.get(trd.getStartDate());
+                if(cnt<=count)
+                    newTl.addTrade(trd);
+            }
+        }
+        return newTl;
+
+    }
+
+
+    public double calcProfit(double start,double close,int buy)
+    {
+        double money=1000000;
+        double shareNo=money/start;
+        double endMoney=close*shareNo;
+        double ret=0;
+        if(buy==1)
+            ret=endMoney-money;
+        else
+            ret=money-endMoney;
+
+        return (ret/100);
+    }
+
+    public double calcProfit(double start,double close,int buy,int grps)
+    {
+        return calcProfit(start,close, buy)/grps;
+    }
+
+    public double calcDividend(double start,double totalDiv,int buy,int grps)
+    {
+        double money=1000000;
+        double shareNo=money/start;
+        double endMoney=totalDiv*shareNo;
+        double ret=0;
+        if(buy==1)
+            ret=endMoney;
+        else
+            ret=endMoney * -1.0;
+
+        return (ret/100)/grps;
+    }
+
+    public ShareList getSL(String sh,String Index) throws Exception {
+        ShareList sl=null;
+        if(Index.equals("UKX"))
+        {
+            return getSL(sh);
+        } else{
+            if(shList.containsKey(sh))
+            {
+                sl=shList.get(sh);
+            }
+            else
+            {
+                try{
+                    sl=bsDB.getShareTableData(sh,"SharesComplete");
+                }catch(SQLException ex)
+                {
+                    bsDB.close();
+                    bsDB=new BasicShareDB();
+                    sl=bsDB.getShareTableData(sh,"SharesComplete");
+                }
+                shList.put(sh, sl);
+            }
+        }
+        return sl;
+    }
+
+    public ShareList getSL(String sh) throws Exception {
+        ShareList sl=null;
+        if(shList.containsKey(sh))
+        {
+            sl=(ShareList) shList.get(sh);
+        }
+        else
+        {
+            try{
+                sl=bsDB.getShareData(sh);
+            }catch(SQLException ex)
+            {
+                bsDB.close();
+                bsDB=new BasicShareDB();
+                sl=bsDB.getShareData(sh);
+            }
+            shList.put(sh, sl);
+        }
+        return sl;
+    }
+
+    public DividendList getDL(String sh) throws Exception
+    {
+        DividendList dl=divList.get(sh);
+        if(dl==null)
+        {
+            dl=bsDB.getDividendData(sh);
+            divList.put(sh, dl);
+        }
+        return dl;
+    }
+
+    public ShareList updateSL(String share, Date today,String index) throws Exception {
+        ShareList slnew = null;
+        ShareList sl = getSL(share);
+        ShareData sd = bsDB.getShareData(share, today,index);
+        if (sd != null) {
+            if (sl.isDatePresent(sd.getDate()) > -1) {
+                sl.updateSharedata(sd);
+            } else {
+                sl.addShareData(sd);
+            }
+        }
+        slnew = sl;
+        return slnew;
+    }
+
+    private Trade indicatorStopTrade(Trade trd, AbstractIndicator absInd, double threshold, boolean sell, int use) throws Exception
+    {
+        String share=trd.getShare();
+        ShareList tsl= getSL(share);
+        IndicatorList il=indList.get(share+absInd.toString());
+
+        if(il==null)
+        {
+            if(indList.size()>1000)
+                indList.clear();
+            il=absInd.buildIndicator(tsl);
+            indList.put(share+absInd.toString(), il);
+
+        }
+        int start=tsl.isDatePresent(trd.getStartDate())+1;
+        int end=tsl.isDatePresent(trd.getCloseDate());
+        Trade newTrade = new Trade(trd.getStartDate(), trd.getStartPrice(), trd.getCloseDate(), trd.getClosePrice());
+
+        double profit=((trd.getClosePrice()-trd.getStartPrice())/trd.getStartPrice())*100;
+        if(sell)
+        {
+            profit=((trd.getStartPrice()-trd.getClosePrice())/trd.getStartPrice())*100;
+        }
+        if(start>=1 && end>=1 && end<=tsl.getSize()-1)
+        {
+//            IndicatorList ilnew=il.filterRange(trd.getStartDate(), trd.getCloseDate(), threshold, use, sell);
+//            if(ilnew.getSize()>0)
+//            {
+//                int useful=use-1;
+//                if(ilnew.getSize()>=use)
+//                {
+//                    //useful=ilnew.getSize()-1;
+//
+//                    Date endD=ilnew.getSharedata(useful).getDDate();
+//                    end=tsl.isDatePresent(endD);
+//                    ShareData sdend=tsl.getSharedata(end);
+//                    double prof=((sdend.getClosePrice()-trd.getStartPrice())/trd.getStartPrice())*100;
+//                    if(sell)
+//                    {
+//                        prof=((trd.getStartPrice()-sdend.getClosePrice())/trd.getStartPrice())*100;
+//                    }
+//                    newTrade = new Trade(trd.getStartDate(), trd.getStartPrice(), sdend.getDate(), sdend.getClosePrice());
+//                    profit=prof;
+//                }
+//            }
+            int cnt=0;
+            for(int i=start;i<=end;i++)
+            {
+                int ind=il.isDatePresent(tsl.getSharedata(i).getDate());
+                IndicatorField indF=il.getSharedata(ind);
+                IndicatorField indFL=il.getSharedata(ind-1);
+                if(!sell && indF.getValue()>=threshold && indFL.getValue()<threshold)
+                {
+                    //il.addIndField(indF);
+                    cnt++;
+                    if(cnt==use)
+                    {
+                        Date edate=indF.getDDate();
+                        ShareData sdend=tsl.getSharedata(tsl.isDatePresent(edate));
+                        profit=((sdend.getClosePrice()-trd.getStartPrice())/trd.getStartPrice())*100;
+                        if(sell)
+                        {
+                            profit=((trd.getStartPrice()-sdend.getClosePrice())/trd.getStartPrice())*100;
+                        }
+                        newTrade = new Trade(trd.getStartDate(), trd.getStartPrice(), sdend.getDate(), sdend.getClosePrice());
+                        break;
+                    }
+                }
+                else if(sell && indF.getValue()<=threshold && indFL.getValue()<threshold)
+                {
+                    //il.addIndField(indF);
+                    if(il.getSize()==use)
+                    {
+                        Date edate=indF.getDDate();
+                        ShareData sdend=tsl.getSharedata(tsl.isDatePresent(edate));
+                        profit=((sdend.getClosePrice()-trd.getStartPrice())/trd.getStartPrice())*100;
+                        if(sell)
+                        {
+                            profit=((trd.getStartPrice()-sdend.getClosePrice())/trd.getStartPrice())*100;
+                        }
+                        newTrade = new Trade(trd.getStartDate(), trd.getStartPrice(), sdend.getDate(), sdend.getClosePrice());
+                        break;
+                    }
+                }
+            }
+
+
+
+
+        }
+        newTrade.setShare(trd.getShare());
+        if(!trd.isValid())
+        {
+            profit=0;
+            newTrade.setIsValid(false);
+        }
+        newTrade.setProfit(profit);
+        return newTrade;
+    }
+
+    /**
+     * @return the shList
+     */
+    public HashMap<String,ShareList> getShList() {
+        return shList;
+    }
+
+//    public double getDrawDown(TradeList yrTrades,int buy,boolean yearly,int grpShares,ShareList index) throws Exception
+//    {
+//        double profit=0.0;
+//        double min=0.0;
+//        double midprofit=0.0;
+//        TradeList tl=new TradeList();
+//        TreeMap<Date,Double> dateprofit=new TreeMap<Date, Double>();
+//        for(int i=0;i<yrTrades.getSize();i++)
+//        {
+//            Trade trd=yrTrades.getTrade(i);
+//            if((i>0 && i%grpShares==0) ||  i==yrTrades.getSize()-1)
+//            {
+//                if(i==yrTrades.getSize()-1)
+//                {
+//                    tl.addTrade(trd);
+//                    profit+=calcProfit(trd.getStartPrice(), trd.getClosePrice(), buy,grpShares);
+//                }
+//                TreeMap<Date,Double> dateprofitTmp=getIntraDayProfit(tl, buy, grpShares,index);
+//                for(Date d:dateprofitTmp.keySet())
+//                {
+//                    double prft=dateprofitTmp.get(d)+midprofit;
+////                    if(yearly)
+////                        System.out.println(d+ "," + prft + "," + dateprofit.get(d));
+//                    if(dateprofit.containsKey(d))
+//                        prft+=dateprofit.get(d);
+//                    dateprofit.put(d, prft);
+//                }
+////                if(yearly)
+////                    System.out.println();
+//                tl=new TradeList();
+//                if(yearly)
+//                    midprofit=profit;
+//            }
+//            tl.addTrade(trd);
+//            if(i==0 && grpShares==1)
+//            {
+//                TreeMap<Date,Double> dateprofitTmp=getIntraDayProfit(tl, buy, grpShares,index);
+//                for(Date d:dateprofitTmp.keySet())
+//                {
+//                    double prft=dateprofitTmp.get(d)+midprofit;
+//                    if(dateprofit.containsKey(d))
+//                        prft+=dateprofit.get(d);
+//                    dateprofit.put(d, prft);
+//                }
+//                tl=new TradeList();
+//            }
+//
+//            profit+=calcProfit(trd.getStartPrice(), trd.getClosePrice(), buy,grpShares);
+//        }
+//        for(Date d:dateprofit.keySet())
+//        {
+//            double prft=dateprofit.get(d);
+////            if(yearly)
+////                System.out.println(d+ "," + prft/100);
+//            if(prft<min)
+//                min=prft;
+//        }
+//        return min/100;
+//    }
+
+    public IndicatorList getIndicatorListFromDB(String pair,Date d1,Date d2,String ind) {
+        IndicatorList il=null;
+        try {
+            il= shareDB.getIndicatorList(pair,d1,d2,ind);
+        } catch (SQLException ex) {
+            try {
+                shareDB.close();
+                shareDB=new ShareListDB();
+                il= shareDB.getIndicatorList(pair,d1,d2,ind);
+            } catch (Exception ex1) {
+                Logger.getLogger(TradeCalculator.class.getName()).log(Level.SEVERE, null, ex1);
+            }
+        }
+        return il;
+    }
+
+    private boolean isLiquid(ShareList sl, Date startDate) {
+        int end=sl.isDatePresent(startDate);
+        double maxliq=100000;
+        if(end==-1)
+        {
+            System.out.println("err1,"+sl.getShare()+","+sdf.format(startDate));
+            return false;
+        }
+        int start=end-10;
+        if(start<0)
+            return false;
+        long vol=0;
+        double close=0.0;
+        int volcount=0,mrkValue=0;
+        for(int i=start;i<end;i++)
+        {
+            long volume=sl.getSharedata(i).getVol();
+            vol+=volume;
+            if(volume>=1000000l)
+                volcount++;
+            double mrk=(volume*(sl.getSharedata(i).getClosePrice()/100));
+            if(mrk>=maxliq)
+                mrkValue++;
+            close+=mrk;
+        }
+
+        return (vol>1000000l && volcount>=3) || (close>=maxliq && mrkValue>=3);
+    }
+}

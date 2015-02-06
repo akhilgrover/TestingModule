@@ -1,0 +1,1756 @@
+package report;
+
+import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import trade.*;
+import Share.*;
+import datasource.BasicShareDB;
+import indicator.AbstractIndicator;
+import indicator.IndicatorList;
+import indicator.MaIndicator;
+import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.ArrayList;
+import trade.close.*;
+import trade.filter.*;
+import trade.open.Open;
+
+/**
+ * Stores Summary of a Single Function
+ * @author Admin
+ */
+public class Summary implements Serializable {
+    //money for each trade
+
+    private transient static double money = 1000000;
+    private transient static final SimpleDateFormat sdf = new SimpleDateFormat("yy");
+    private transient static final DecimalFormat frmt = new DecimalFormat("0.0");
+    //Name of Current Summary
+    private String name;
+    //Total profit in pounds
+    private double tProfit;
+    //total of negative trades
+    private double tLoss;
+    //total of positive trade
+    private double tGain;
+    //total trade count
+    private int tCount;
+    //positve trade count
+    private int gainTrades;
+    //negative trade count
+    private int lossTrades;
+    //Positive Percentage by total profit
+    private double gainPct;
+    //Highest Positive Trade
+    private double gainHighTrd;
+    //average positive trade
+    private double gainAvgTrd;
+    //highest negative trade
+    private double lossHighTrd;
+    private double lossAvgTrd;
+    //highest consecutive positve trades
+    private int consecGain = 1;
+    //maximum consec profit for positive trades
+    private double maxGainProfit = 0;
+    //profit on highest consecutive positive trades
+    private double consecGainProfit = 0;
+    private int consecLoss = 1;
+    private double maxLossProfit = 0;
+    private double consecLossProfit = 0;
+    //longest open trade
+    private long maxOpenCount;
+    private long minOpenCount = 999;
+    private long minOpenCountMidle = 999;
+    private long avgOpenCountMidle = 0;
+    private int gainTime;
+    private int lossTime;
+    //sum of all trade days
+    private int totalOpenDays;
+    private double zero = 0, one = 0, two = 0, three = 0, four = 0, five = 0, six = 0;
+    //percentage of open days by total trading days
+    private double dayPercent = 0;
+    private double multiPercent = 0;
+    private double trdDayPercent = 0;
+    private ArrayList<String> yr;
+    private ArrayList<Integer> TrdCount, yrGainCount, yrLoserCount;
+    private ArrayList<Double> PProfit, drawDown, drawDownTrades;
+    private TreeMap<Date, ArrayList> totalDrawdown;
+    private TreeMap<Date, Double> totalProfits;
+    // actual open days without multiple trades
+    private int actualOpen = 0;
+    private int grpShares = 1;
+    private double tradeUnit = 1;
+    private String sysType = "";
+    private int impScore;
+    //share and trading style info
+    private String share;
+    private String closeShare;
+    private AbstractIndicator absInd;
+    private Open opn;
+    private AbstractIndicator clsAbsInd;
+    private Close cls;
+    private Filters opnFilter;
+    private Filters clsFilter;
+    private int buy;
+    private int consec;
+    private double sStopLoss;
+    private double iStopLoss;
+    private IndividualClose iClose;
+    private transient TradeCalculator tc;
+    private transient ShareList sl;
+    private SystemGrade sg;
+    private String index;
+    private transient int goodscore = 0;
+    private transient String yearlyPerf;
+    private transient int newHighDays;
+    private transient int yrGrades;
+    //serial version
+    private static final long serialVersionUID = 7526472295622776147L;
+    //private transient static HashMap<Date,HashMap<Date,Integer>> dateFreq=new HashMap<Date, HashMap<Date, Integer>>(5000, 0.9f);
+    private transient int flatGrade;
+    private transient int positiveGrade;
+    private transient double flatProfit;
+
+    public Summary(String share, AbstractIndicator absInd, Open opn, String closeShare,
+            AbstractIndicator clsAbsInd, Close cls, Filters opnFilter, Filters clsFilter, int buy, int consec,
+            double shareSL, double indSL, String index, IndividualClose iclose) {
+        this.share = share;
+        this.closeShare = closeShare;
+        this.absInd = absInd;
+        this.clsAbsInd = clsAbsInd;
+        this.opn = opn;
+        this.cls = cls;
+        this.opnFilter = opnFilter;
+        this.clsFilter = clsFilter;
+        this.buy = buy;
+        this.consec = consec;
+        this.sStopLoss = shareSL;
+        this.iStopLoss = indSL;
+        this.index = index;
+        this.iClose = iclose;
+    }
+
+    public Summary(String name, double amount) {
+        this.name = name;
+        this.money = amount;
+    }
+
+    public double calcProfit(double start, double close, int buy) {
+        double shareNo = money / start;
+        double endMoney = close * shareNo;
+        double ret = 0;
+        if (buy == 1) {
+            ret = endMoney - money;
+        } else {
+            ret = money - endMoney;
+        }
+
+        return (ret / 100) / getGrpShares();
+    }
+
+    public TradeList getTradeProfit(ShareList sl) throws Exception {
+        //BasicShareDB bsd=new BasicShareDB();
+        //ShareList sl=bsd.getShareData(share);
+        IndicatorList il = absInd.buildIndicator(sl);
+        IndicatorList ilClose = null;
+        if (tc == null) {
+            tc = new TradeCalculator();
+        }
+        if (clsAbsInd != null) {
+            ilClose = clsAbsInd.buildIndicator(sl);
+        }
+        TradeList tl = tc.getTrades(il, ilClose, sl, opn, opnFilter, cls, clsFilter);
+        TradeList trdProfits = new TradeList();
+        for (int i = 0; i < tl.getSize(); i++) {
+            Trade trd = tl.getTrade(i);
+            //double profit=calcProfit(trd.getStartPrice(),trd.getClosePrice(),buy);
+            //Trade newTrade=new Trade(trd.getStartDate(), trd.getStartPrice(), trd.getCloseDate(), trd.getClosePrice());
+            //newTrade.setProfit(profit);
+            Trade newTrade = tc.calcDividendTrade(trd, buy, getGrpShares());
+            trdProfits.addTrade(newTrade);
+        }
+        //bsd.close();
+        return trdProfits;
+    }
+
+    public void calculateTrades(TradeList trdList, ShareList sl, int topShares, TradeCalculator tc, boolean drawCalc) throws Exception {
+        this.grpShares = topShares;
+        calculateTrades(trdList, sl, tc, drawCalc);
+    }
+
+    public void calculateTrades(TradeList trdList, ShareList sl, int topShares, TradeCalculator tc, boolean drawCalc, double maxD) throws Exception {
+        this.grpShares = topShares;
+        calculateTrades(trdList, sl, tc, drawCalc, maxD);
+    }
+
+    public void calculateTrades(TradeList trdList, ShareList sl, TradeCalculator tc, boolean drawCalc) throws Exception {
+        calculateTrades(trdList, sl, tc, drawCalc, 999);
+    }
+
+    public void calculateTrades(TradeList trdList, ShareList sl, TradeCalculator tc, boolean drawCalc, double maxDraw) throws Exception {
+        if (sl == null) {
+            BasicShareDB bsd = new BasicShareDB();
+            sl = bsd.getShareData(share);
+            bsd.close();
+        }
+        this.tc = tc;
+        this.sl = sl;
+        String bb = "Sell";
+        if (buy == 1) {
+            bb = "Buy";
+        }
+        name = share;
+        if (closeShare != null) {
+            name += " Open " + closeShare;
+        }
+        name += " " + absInd.toString() + opn.toString();
+        if (opnFilter != null) {
+            name += opnFilter.toString();
+        }
+        if (clsAbsInd != null) {
+            name += clsAbsInd.toString() + " Cls ";
+        }
+        name += cls.toString();
+        if (clsFilter != null) {
+            name += clsFilter.toString();
+        }
+        if (getGrpShares() > 1) {
+            name += " " + getGrpShares() + " Shares ";
+        }
+        name += bb;
+        if (tc == null) {
+            tc = new TradeCalculator();
+        }
+        ArrayList<Double> arrProfit = new ArrayList<Double>(sl.getSize());
+        totalProfits = new TreeMap<Date, Double>();
+        double profit;
+        int currGStreak = 0, currLStreak = 0;
+        HashMap<Date, HashMap<Date, Integer>> dateFreq = new HashMap<Date, HashMap<Date, Integer>>(sl.getSize());
+        //dateFreq.clear();
+        double startProfit = 0, cLossP = 0, cGainP = 0;
+        yr = new ArrayList<String>(15);
+        PProfit = new ArrayList<Double>(15);
+        TrdCount = new ArrayList<Integer>(15);
+        yrGainCount = new ArrayList<Integer>(15);
+        yrLoserCount = new ArrayList<Integer>(15);
+        drawDown = new ArrayList<Double>(15);
+        drawDownTrades = new ArrayList<Double>(15);
+        double yrprofit = 0;
+        int yrcount = 0;
+        double grpProfit = 0;
+        int dif = 0;
+        ArrayList<Integer> arrTdiff = new ArrayList<Integer>();
+        HashMap<String, TradeList> yrTrades = new LinkedHashMap<String, TradeList>();
+
+        for (int i = 0; i < trdList.getSize(); i++) {
+            Trade trd = tc.calcDividendTrade(trdList.getTrade(i), buy, getGrpShares());
+            profit = trd.getProfit();//calcProfit(trd.getStartPrice(),trd.getClosePrice(),buy);
+            if (i > 0 && trd.getStartDate().getYear() > trdList.getTrade(i - 1).getStartDate().getYear()) {
+                String yrd = sdf.format(trdList.getTrade(i - 1).getStartDate());
+                if (!yr.contains(yrd)) {
+                    yr.add(yrd);
+                } else {
+                    System.out.print(yrd);
+                }
+                PProfit.add(yrprofit / 100);
+                TrdCount.add(yrcount / getGrpShares());
+                int lstrd = lossTrades;
+                int gntrd = gainTrades;
+                int siz = yrLoserCount.size();
+                if (siz > 0) {
+                    lstrd = lossTrades - yrLoserCount.get(siz - 1);
+                    gntrd = gainTrades - yrGainCount.get(siz - 1);
+                }
+                yrLoserCount.add(lstrd);
+                yrGainCount.add(gntrd);
+                yrprofit = 0;
+                yrcount = 0;
+                /*if(drawCalc)
+                {
+                ArrayList<Double> downs=getDrawDown(yrTrades,buy, getGrpShares(),sl,tc);
+                drawDown.add(downs.get(0));
+                drawDownTrades.add(downs.get(1));
+                if(downs.get(0)<maxDraw*-1 || downs.get(1)<maxDraw*-1)
+                break;
+                }
+                else
+                {
+                drawDown.add(0.0);
+                drawDownTrades.add(0.0);
+                }
+                yrTrades=new TradeList();*/
+
+            }
+            yrprofit += profit;
+            yrcount++;
+
+            //yr trades
+            String yrd = sdf.format(trd.getCloseDate());
+            String yrdS = sdf.format(trd.getStartDate());
+            if (!yrTrades.containsKey(yrdS)) {
+                yrTrades.put(yrdS, new TradeList());
+            }
+            TradeList yrs = yrTrades.get(yrd);
+            if (yrs == null) {
+                yrs = new TradeList();
+            }
+            yrs.addTrade(trd);
+            yrTrades.put(yrd, yrs);
+
+            if ((i > 0 && i % getGrpShares() == 0) || i == trdList.getSize() - 1 || (i == 0 && getGrpShares() == 1)) {
+                arrProfit.add(grpProfit);
+                if (grpProfit < 0) {
+                    tLoss += grpProfit;
+                    lossTrades++;
+                    if (grpProfit < lossHighTrd) {
+                        lossHighTrd = grpProfit;
+                    }
+                    lossTime += dif;
+                    if (arrProfit.size() > 1 && arrProfit.get(arrProfit.size() - 2) < 0) {
+                        currLStreak++;
+                        if (currLStreak >= consecLoss) {
+                            consecLoss = currLStreak;
+                            if (startProfit > 0)//&& consecLossProfit<((startProfit-(tProfit+profit))/startProfit)*100)
+                            {
+                                consecLossProfit = ((startProfit - (tProfit + grpProfit)) / (startProfit + 10000)) * 100;
+                            } else if (startProfit == 0) {
+                                consecLossProfit = ((startProfit - (tProfit + grpProfit)) / 10000) * 100;
+                            }
+                        }
+                    } else {
+                        if (startProfit > 0) {
+                            cGainP = ((tProfit - startProfit) / (startProfit + 10000)) * 100;
+                        } else {
+                            cGainP = 0;
+                        }
+
+                        //System.out.println(trd.getStartDate() + "\t" + startProfit + "\t" + tProfit + "\t" + maxGainProfit + "\t" + cGainP);
+                        if (cGainP > maxGainProfit) {
+                            maxGainProfit = cGainP;
+                        }
+                        startProfit = tProfit;
+                        currLStreak = 1;
+
+                    }
+                } else if (grpProfit > 0) {
+                    tGain += grpProfit;
+                    gainTrades++;
+                    if (grpProfit > gainHighTrd) {
+                        gainHighTrd = grpProfit;
+                    }
+                    gainTime += dif;
+                    if (arrProfit.size() > 1 && arrProfit.get(arrProfit.size() - 2) > 0) {
+                        currGStreak++;
+                        if (currGStreak >= consecGain) {
+                            consecGain = currGStreak;
+                            if (startProfit > 0)// && consecGainProfit<(((tProfit+profit)-startProfit)/startProfit)*100)
+                            {
+                                consecGainProfit = (((tProfit + grpProfit) - startProfit) / (startProfit + 10000)) * 100;
+                            } else if (startProfit == 0) {
+                                consecGainProfit = (((tProfit + grpProfit) - startProfit) / 10000) * 100;
+                            }
+                        }
+                    } else {
+                        if (startProfit > 0) {
+                            cLossP = ((startProfit - tProfit) / (startProfit + 10000)) * 100;
+                        } else {
+                            cLossP = 0;
+                        }
+                        //System.out.println(trd.getStartDate() + "\t" + startProfit + "\t" + tProfit + "\t" + maxLossProfit + "\t" + cLossP);
+                        if (cLossP > maxLossProfit) {
+                            maxLossProfit = cLossP;
+                        }
+                        startProfit = tProfit;
+                        currGStreak = 1;
+                    }
+                }
+                grpProfit = 0;
+            }
+            grpProfit += profit;
+            tCount++;
+            tProfit += profit;
+            double prft = profit;
+            if (totalProfits.containsKey(trd.getCloseDate())) {
+                prft += totalProfits.get(trd.getCloseDate());
+            }
+            totalProfits.put(trd.getCloseDate(), prft);
+            int endIndex = sl.isDatePresent(trd.getCloseDate());
+            if (endIndex == -1) {
+                endIndex = sl.isLowerDatePresent(trd.getCloseDate());
+            }
+            int stIndex = sl.isDatePresent(trd.getStartDate());
+            if (stIndex == -1) {
+                stIndex = sl.isLowerDatePresent(trd.getStartDate());
+            }
+            for (int j = stIndex; j < endIndex; j++) {
+                HashMap<Date, Integer> tmap = null;//new HashMap<Date, Integer>(4);
+                Date dd = sl.getSharedata(j).getDate();
+                int c = 1;
+                tmap = dateFreq.get(dd);
+                if (tmap == null) {
+                    tmap = new HashMap<Date, Integer>(4);
+                }
+                if (tmap.containsKey(trd.getStartDate())) {
+                    c = tmap.get(trd.getStartDate());
+                    c++;
+                }
+                tmap.put(trd.getStartDate(), c);
+                dateFreq.put(dd, tmap);
+            }
+
+            dif = endIndex - stIndex;
+            arrTdiff.add(dif);
+            totalOpenDays += dif;
+            if (arrTdiff.size() == getGrpShares() && i < trdList.getSize()) {
+                Collections.sort(arrTdiff);
+                Double midle = (0.7 * getGrpShares()) - 1;
+                int hDif = arrTdiff.get(getGrpShares() - 1);
+                int lDif = arrTdiff.get(midle.intValue());
+                if (hDif > maxOpenCount) {
+                    maxOpenCount = hDif;
+                }
+                if (hDif < minOpenCount) {
+                    minOpenCount = hDif;
+                }
+                if (lDif < getMinOpenCountMidle()) {
+                    minOpenCountMidle = lDif;
+                }
+                avgOpenCountMidle += lDif;
+                arrTdiff = new ArrayList<Integer>();
+            }
+        }
+        if (trdList.getSize() > 0) {
+            String yrd = sdf.format(trdList.getTrade(trdList.getSize() - 1).getStartDate());
+            if (!yr.contains(yrd)) {
+                yr.add(yrd);
+            }
+        }
+        totalDrawdown = getTotalDrawDown(trdList, buy, getGrpShares(), sl, tc);
+        PProfit.add(yrprofit / 100);
+        TrdCount.add(yrcount / getGrpShares());
+        int lstrd = lossTrades;
+        int gntrd = gainTrades;
+        int siz = yrLoserCount.size();
+        if (siz > 0) {
+            lstrd = lossTrades - yrLoserCount.get(siz - 1);
+            gntrd = gainTrades - yrGainCount.get(siz - 1);
+        }
+        yrLoserCount.add(lstrd);
+        yrGainCount.add(gntrd);
+
+        if (trdList.getSize() > 0) {
+
+            for (String yrs : yrTrades.keySet()) {
+                //String str=sdf.format(trdList.getTrade(trdList.getSize()-1).getCloseDate());
+                if (!yr.contains(yrs)) {
+                    yr.add(yrs);
+
+                    Collections.sort(yr, new Comparator<String>() {
+
+                        public int compare(String o1, String o2) {
+                            int i = 0;
+                            try {
+                                i = sdf.parse(o1).compareTo(sdf.parse(o2));
+                            } catch (ParseException ex) {
+                                Logger.getLogger(Summary.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            return i;
+                        }
+                    });
+                    int ind = yr.indexOf(yrs);
+                    PProfit.add(ind, 0.0);
+                    TrdCount.add(ind, 0);
+                    yrLoserCount.add(ind, 0);
+                    yrGainCount.add(ind, 0);
+                }
+                if (drawCalc) {
+                    TradeList yrTrds = yrTrades.get(yrs);
+                    ArrayList<Double> downs = getDrawDown(yrTrds, buy, getGrpShares(), sl, tc);
+                    drawDown.add(downs.get(0));
+                    drawDownTrades.add(downs.get(1));
+                } else {
+                    drawDown.add(0.0);
+                    drawDownTrades.add(0.0);
+                }
+
+            }
+        }
+        int zzero = 0, oone = 0, ttwo = 0, tthree = 0, ffour = 0, ffive = 0, ssix = 0;
+        actualOpen = dateFreq.size();
+        //Iterator itr=dateFreq.values().iterator();
+//        System.out.print(Collections.frequency(dateFreq.values(), 1));
+        //while(itr.hasNext())
+        int multipleOpen = 0, countOpen = 0;
+        for (Date d : dateFreq.keySet()) {
+            HashMap<Date, Integer> hm = dateFreq.get(d);
+            int c = hm.size();
+            multipleOpen += c;
+            for (Date dd : hm.keySet()) {
+                countOpen += dateFreq.get(d).get(dd);
+            }
+            switch (c) {
+                case 1:
+                    oone++;
+                    break;
+                case 2:
+                    ttwo++;
+                    break;
+                case 3:
+                    tthree++;
+                    break;
+                case 4:
+                    ffour++;
+                    break;
+                case 5:
+                    ffive++;
+                    break;
+                default:
+                    ssix++;
+            }
+            hm.clear();
+        }
+
+        tCount /= getGrpShares();
+        if (tCount > 0) {
+            avgOpenCountMidle /= tCount;
+        }
+        zzero = sl.getSize() - dateFreq.size();
+        this.zero = ((zzero * 1.0) / sl.getSize()) * 100;
+        this.one = ((oone * 1.0) / sl.getSize()) * 100;
+        this.two = ((ttwo * 1.0) / sl.getSize()) * 100;
+        this.three = ((tthree * 1.0) / sl.getSize()) * 100;
+        this.four = ((ffour * 1.0) / sl.getSize()) * 100;
+        this.five = ((ffive * 1.0) / sl.getSize()) * 100;
+        this.six = ((ssix * 1.0) / sl.getSize()) * 100;
+        //System.out.println((oone+(ttwo*2)+(tthree*3)+(ffour*4)+(ffive*5)+(ssix*6))/actualOpen);
+        tradeUnit = ((oone + (ttwo * 2) + (tthree * 3) + (ffour * 4) + (ffive * 5) + (ssix * 6))) * 1.0 / actualOpen;
+        if (tProfit > 0) {
+            gainPct = (tGain / tProfit) * 100;
+        }
+        if (gainTrades > 0) {
+            gainAvgTrd = tGain / gainTrades;
+        }
+        if (lossTrades > 0) {
+            lossAvgTrd = tLoss / lossTrades;
+        }
+        dayPercent = ((getActualOpenDays() * 1.0) / sl.getSize()) * 100;
+        multiPercent = ((multipleOpen * 1.0) / sl.getSize()) * 100;
+        trdDayPercent = ((countOpen * 1.0) / (sl.getSize() * 10.0)) * 100;
+        //System.out.println(((multipleOpen*1.0)/sl.getSize())*100);
+        //System.out.println(((countOpen*1.0)/(sl.getSize()*10.0))*100);
+        dateFreq.clear();
+        this.tc = null;
+        //if (opnFilter instanceof MaFilter) {
+        //MaFilter maf = (MaFilter) opnFilter;
+        //maf.releaseSL();
+        //}
+    }
+
+    /**
+     * Method getTProfit
+     *
+     *
+     * @return
+     *
+     */
+    public double getTProfit() {
+        return (this.tProfit);
+    }
+
+    /**
+     * Method getTLoss
+     *
+     *
+     * @return
+     *
+     */
+    public double getTLoss() {
+        return (this.tLoss);
+    }
+
+    /**
+     * Method getTGain
+     *
+     *
+     * @return
+     *
+     */
+    public double getTGain() {
+        return (this.tGain);
+    }
+
+    /**
+     * Method getTCount
+     *
+     *
+     * @return
+     *
+     */
+    public int getTCount() {
+        return (this.tCount);
+    }
+
+    /**
+     * Method getGainTrades
+     *
+     *
+     * @return
+     *
+     */
+    public int getGainTrades() {
+        return (this.gainTrades);
+    }
+
+    /**
+     * Method getGainPct
+     *
+     *
+     * @return
+     *
+     */
+    public double getGainPct() {
+        return (this.gainPct);
+    }
+
+    /**
+     * Method getGainHighTrd
+     *
+     *
+     * @return
+     *
+     */
+    public double getGainHighTrd() {
+        return (this.gainHighTrd);
+    }
+
+    /**
+     * Method getGainAvgTrd
+     *
+     *
+     * @return
+     *
+     */
+    public double getGainAvgTrd() {
+        return (this.gainAvgTrd);
+    }
+
+    /**
+     * Method getLossHighTrd
+     *
+     *
+     * @return
+     *
+     */
+    public double getLossHighTrd() {
+        return (this.lossHighTrd);
+    }
+
+    /**
+     * Method getLossAvgTrd
+     *
+     *
+     * @return
+     *
+     */
+    public double getLossAvgTrd() {
+        return (this.lossAvgTrd);
+    }
+
+    /**
+     * Method getConsecGain
+     *
+     *
+     * @return
+     *
+     */
+    public int getConsecGain() {
+        return (this.consecGain);
+    }
+
+    /**
+     * Method getConsecLoss
+     *
+     *
+     * @return
+     *
+     */
+    public int getConsecLoss() {
+        return (this.consecLoss);
+    }
+
+    /**
+     * Method getMaxOpenCount
+     *
+     *
+     * @return
+     *
+     */
+    public long getMaxOpenCount() {
+        return (this.maxOpenCount);
+    }
+
+    /**
+     * Method getTotalOpenDays
+     *
+     *
+     * @return
+     *
+     */
+    public int getTotalOpenDays() {
+        return (this.totalOpenDays);
+    }
+
+    /**
+     * Method getActualOpenDays
+     *
+     *
+     * @return
+     *
+     */
+    public int getActualOpenDays() {
+        return (this.actualOpen);
+    }
+
+    /**
+     * Method getLossTradeCount
+     *
+     *
+     * @return
+     *
+     */
+    public int getLossTradeCount() {
+        return (this.lossTrades);
+    }
+
+    /**
+     * Method getConsecGainProfit
+     *
+     *
+     * @return
+     *
+     */
+    public double getConsecGainProfit() {
+        return (this.consecGainProfit);
+    }
+
+    /**
+     * Method getConsecLossProfit
+     *
+     *
+     * @return
+     *
+     */
+    public double getConsecLossProfit() {
+        return (this.consecLossProfit);
+    }
+
+    /**
+     * Method getMaxGainProfit
+     *
+     *
+     * @return
+     *
+     */
+    public double getMaxGainProfit() {
+        return (this.maxGainProfit);
+    }
+
+    /**
+     * Method getMaxLossProfit
+     *
+     *
+     * @return
+     *
+     */
+    public double getMaxLossProfit() {
+        return (this.maxLossProfit);
+    }
+
+    /**
+     * Method getLossTradeCount
+     *
+     *
+     * @return
+     *
+     */
+    public String getFreq() {
+        //DecimalFormat frmt=new DecimalFormat("0.0");
+        String sep = ", ";
+        String ret = frmt.format(zero) + sep + frmt.format(one) + sep
+                + frmt.format(two) + sep + frmt.format(three) + sep
+                + frmt.format(four) + sep + frmt.format(five) + sep + frmt.format(six);
+        return (ret);
+    }
+
+    /**
+     * Method getDayPercentage
+     *
+     *
+     * @return
+     *
+     */
+    public double getDayPercentage() {
+        return dayPercent;
+    }
+
+    /**
+     * Method getYearlyPerf
+     *
+     *
+     * @return
+     *
+     */
+    public String getYearlyPerf() {
+
+        if (yearlyPerf == null || yearlyPerf.equals("")) {
+            StringBuilder yrPerf = new StringBuilder();
+            //DecimalFormat frmt=new DecimalFormat("0.0");
+            for (int y = 0; y < yr.size(); y++) {
+                yrPerf.append("*").append(yr.get(y)).append("(").append(frmt.format(PProfit.get(y))).append(
+                        ",").append(TrdCount.get(y)).append(",").append((y < drawDown.size() ? frmt.format(drawDown.get(y)) : 0)).append(",").append((y < drawDown.size() ? frmt.format(drawDownTrades.get(y)) : 0)).append(") ");
+            }
+            yearlyPerf = yrPerf.toString();
+        } /*else {
+        yrPerf.append(yearlyPerf);
+        }*/
+        return yearlyPerf;//yrPerf.toString();
+    }
+
+    /**
+     * Method getYearlyGrade
+     *
+     *
+     * @return
+     *
+     */
+    public int getYearlyGrade() {
+        int counts = yrGrades, mising = 0;
+        if (counts == 0) {
+            double min = 0;
+            double prft = 0;
+            ArrayList<Integer> yrly = new ArrayList<Integer>();
+            ArrayList<Double> yrlyPft = new ArrayList<Double>();
+            for (Date d : totalProfits.keySet()) {
+                if (totalProfits.lowerKey(d) != null && d.getYear() > totalProfits.lowerKey(d).getYear()) {
+                    yrly.add(totalProfits.lowerKey(d).getYear());
+                    yrlyPft.add(prft);
+                    if (prft >= min) {
+                        counts++;
+                    } else if (buy == 1 && yrly.size() > 1) {
+
+                        int y1 = yrly.get(yrly.size() - 1);
+                        int y2 = yrly.get(yrly.size() - 2);
+                        //if( y1-y2>1)
+                        {
+                            mising = y1 - y2;
+                        }
+                        if (prft <= min && (yrlyPft.get(yrly.size() - 2) <= min || mising > 1)) {
+                            if (yrly.size() > 2 && (yrlyPft.get(yrly.size() - 3) <= min) && mising == 1) {
+                                counts--;
+                            } else {
+                                counts -= 2;
+                            }
+                        }
+                    }
+                    prft = 0;
+                }
+                prft += totalProfits.get(d);
+                if (totalProfits.higherKey(d) == null) {
+                    int yr = d.getYear();
+                    if (!yrly.contains(yr)) {
+                        yrly.add(d.getYear());
+                        yrlyPft.add(prft);
+                    }
+                    if (prft >= min) {
+                        counts++;
+                    } else if (buy == 1 && yrly.size() > 1) {
+
+                        int y1 = yrly.get(yrly.size() - 1);
+                        int y2 = yrly.get(yrly.size() - 2);
+                        //if( y1-y2>1)
+                        {
+                            mising = y1 - y2;
+                        }
+                        if (prft <= min && (yrlyPft.get(yrly.size() - 2) <= min || mising > 1)) {
+                            if (yrly.size() > 2 && (yrlyPft.get(yrly.size() - 3) <= min) && mising == 1) {
+                                counts--;
+                            } else {
+                                counts -= 2;
+                            }
+                        }
+                    }
+                    prft = 0;
+                }
+            }
+        }
+        return counts;
+    }
+
+    /**
+     * Method getYearlyGrade
+     *
+     *
+     * @return
+     *
+     */
+    public double getYearlyGradePerc() {
+        double profit = 0;
+        for (Date d : totalProfits.keySet()) {
+            try {
+                if (d.after(sdf.parse("01"))) {
+                    break;
+                }
+                profit += totalProfits.get(d);
+            } catch (ParseException ex) {
+                Logger.getLogger(Summary.class.getName()).log(Level.SEVERE, null, ex);
+                break;
+            }
+        }
+        double ret = (profit / tProfit) * 100;
+        return ret;
+    }
+
+    /**
+     * Method getFlatGrade
+     *
+     *
+     * @return
+     *
+     */
+    public int getFlatGrade() {
+        int count = flatGrade;
+        if (count == 0) {
+            HashMap<String, Double> arr = new HashMap<String, Double>();
+            for (Date d : totalProfits.keySet()) {
+                Double prft = totalProfits.get(d);
+                if (arr.containsKey(sdf.format(d))) {
+                    prft += arr.get(sdf.format(d));
+                }
+                arr.put(sdf.format(d), prft);
+            }
+            if (buy == 1) {
+                for (String s : arr.keySet()) {
+                    if (/*s.equals("09") ||*/s.equals("01") || s.equals("02") || s.equals("08")) {
+                        Double prf = arr.get(s);
+                        if (prf > 0) {
+                            count++;
+                        }
+                    }
+                }
+            } else if (buy == 0) {
+                for (String s : arr.keySet()) {
+                    if (s.equals("09") || s.equals("01") || s.equals("02") || s.equals("08")) {
+                        Double prf = arr.get(s);
+                        if (prf / 100 >= 20) {
+                            count++;
+                        }
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Method getPositiveGrade
+     *
+     *
+     * @return
+     *
+     */
+    public int getPositiveGrade() {
+        int count = positiveGrade;
+        if (count == 0) {
+            if (buy == 1) {
+//            for (String s : arr.keySet()) {
+//                if (!s.equals("09") && !s.equals("01") && !s.equals("02") && !s.equals("08")) {
+//                    Double prf = arr.get(s);
+//                    if (prf > 0) {
+//                        count++;
+//                    }
+//                }
+//            }
+                count = getYearlyGrade();
+            } else if (buy == 0) {
+                HashMap<String, Double> arr = new HashMap<String, Double>();
+                for (Date d : totalProfits.keySet()) {
+                    Double prft = totalProfits.get(d);
+                    if (arr.containsKey(sdf.format(d))) {
+                        prft += arr.get(sdf.format(d));
+                    }
+                    arr.put(sdf.format(d), prft);
+                }
+                for (String s : arr.keySet()) {
+                    if (!s.equals("09") && !s.equals("01") && !s.equals("02") && !s.equals("08")) {
+                        Double prf = arr.get(s);
+                        if (prf > 0) {
+                            count++;
+                        }
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Method getFlatProfit
+     *
+     *
+     * @return
+     *
+     */
+    public double getFlatProfit() {
+        double profit = flatProfit;
+        if (profit == 0.0) {
+            for (Date d : totalProfits.keySet()) {
+                if (buy == 1) {
+                    if (sdf.format(d).equals("01")) {
+                        profit += totalProfits.get(d);
+                    }
+
+                    if (sdf.format(d).equals("02")) {
+                        profit += totalProfits.get(d);
+                    }
+                    if (sdf.format(d).equals("03")) {
+                        break;
+                    }
+                } else if (buy == 0) {
+                    if (/*!sdf.format(d).equals("00") &&*/!sdf.format(d).equals("01") && !sdf.format(d).equals("02") && !sdf.format(d).equals("08")) {
+                        profit += totalProfits.get(d);
+                    }
+                }
+            }
+
+        }
+        return profit;
+    }
+
+    /**
+     * Method getYearlyGainLoss
+     *
+     *
+     * @return
+     *
+     */
+    public String getYearlyGainLoss() {
+        StringBuilder yrPerf = new StringBuilder();
+        yrPerf.append(frmt.format((gainTrades * 1.0) / tCount)).append("(").append(gainTrades).append(",").append(lossTrades).append("), ");
+        for (int y = 0; y < yr.size(); y++) {
+            double d = (yrGainCount.get(y) * 1.0) / (yrGainCount.get(y) + yrLoserCount.get(y));
+            yrPerf.append(yr.get(y)).append("(").append(frmt.format(d)).append(",").append(yrGainCount.get(y)).append(",").append(yrLoserCount.get(y)).append(") ");
+        }
+        return yrPerf.toString();
+    }
+
+    /**
+     * Method toString
+     *
+     *
+     * @return
+     *
+     */
+    @Override
+    public String toString() {
+        String sep = System.getProperty("line.separator");
+
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(sep);
+        buffer.append("Total Profit  \t");
+        buffer.append(tProfit);
+        buffer.append(sep);
+        buffer.append("Total Loss  \t");
+        buffer.append(tLoss);
+        buffer.append(sep);
+        buffer.append("Total Gain \t");
+        buffer.append(tGain);
+        buffer.append(sep);
+        buffer.append("Trade Count \t");
+        buffer.append(tCount);
+        buffer.append(sep);
+        buffer.append("Profit Per Trade \t");
+        buffer.append(tProfit / tCount);
+        buffer.append(sep);
+        buffer.append("Profit Per Trade Per Day \t");
+        buffer.append(tProfit / totalOpenDays);
+        buffer.append(sep);
+        buffer.append("Gain Trade Count \t");
+        buffer.append(gainTrades);
+        buffer.append(sep);
+        buffer.append("Loss Trade Count \t");
+        buffer.append(lossTrades);
+        buffer.append(sep);
+        buffer.append("Gain Percentage \t");
+        buffer.append(gainPct);
+        buffer.append(sep);
+        buffer.append("Gain Highest Trade \t");
+        buffer.append(gainHighTrd);
+        buffer.append(sep);
+        buffer.append("Gain Avg Trade \t");
+        buffer.append(gainAvgTrd);
+        buffer.append(sep);
+        buffer.append("Loss High Trade \t");
+        buffer.append(lossHighTrd);
+        buffer.append(sep);
+        buffer.append("Loss Avg Trade \t");
+        buffer.append(lossAvgTrd);
+        buffer.append(sep);
+        buffer.append("Max Conecutive Gainers \t");
+        buffer.append(consecGain);
+        buffer.append(sep);
+        buffer.append("Max Conecutive loseres \t");
+        buffer.append(consecLoss);
+        buffer.append(sep);
+        buffer.append("Max Open Days \t");
+        buffer.append(maxOpenCount);
+        buffer.append(sep);
+        buffer.append("Total Open Days \t");
+        buffer.append(totalOpenDays);
+        buffer.append(sep);
+
+
+        return buffer.toString();
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return (this.name);
+    }
+
+    public String getShare() {
+        return this.share;
+    }
+
+    public String getCloseShare() {
+        return this.closeShare;
+    }
+
+    public AbstractIndicator getIndicator() {
+        return this.absInd;
+    }
+
+    public Open getOpen() {
+        return this.opn;
+    }
+
+    public AbstractIndicator getCloseIndicator() {
+        return this.clsAbsInd;
+    }
+
+    public Close getClose() {
+        return this.cls;
+    }
+
+    public Filters getOpenFilter() {
+        return this.opnFilter;
+    }
+
+    public Filters getCloseFilter() {
+        return this.clsFilter;
+    }
+
+    public int getBuy() {
+        return this.buy;
+    }
+
+    /**
+     * @return the PProfit
+     */
+    public ArrayList<Double> getPProfit() {
+        return PProfit;
+    }
+
+    public double getAvgTradeLength() {
+        Double d = totalOpenDays / (tCount * grpShares * 1.0);
+        return Math.round(d);
+    }
+
+    public double getPPTPD() {
+        return (tProfit * getGrpShares() * 1.0) / totalOpenDays;
+    }
+
+    public double getGainHighPercent() {
+        return gainHighTrd * 100.0 / tProfit;
+    }
+
+    public double getLossHighPercent() {
+        return lossHighTrd * 100.0 / tProfit;
+    }
+
+    public double getPPTExec() {
+        return (tProfit - gainHighTrd) * 1.0 / (tCount - 1);
+    }
+
+    /**
+     * @return the minOpenCount
+     */
+    public long getMinOpenCount() {
+        return minOpenCount;
+    }
+
+    /**
+     * @return the gainTime
+     */
+    public int getGainTime() {
+        return gainTime;
+    }
+
+    /**
+     * @return the lossTime
+     */
+    public int getLossTime() {
+        return lossTime;
+    }
+
+    /**
+     * @return the gainTime
+     */
+    public double getGainTimePercent() {
+        return (gainTime * 100.0) / (totalOpenDays / getGrpShares());
+    }
+
+    /**
+     * @return the lossTime
+     */
+    public double getLossTimePercent() {
+        return (lossTime * 100.0) / (totalOpenDays / getGrpShares());
+    }
+
+    public ArrayList<Double> getDrawDown(TradeList yrTrades, int buy, int grpShares, ShareList index, TradeCalculator tc) throws Exception {
+        double profit = 0.0;
+        double min = 0.0;
+        double midprofit = 0.0;
+        TradeList tl = new TradeList();
+        TreeMap<Date, Double> dateprofit = new TreeMap<Date, Double>();
+        TreeMap<Date, Double> dateprofitYr = new TreeMap<Date, Double>();
+        TreeMap<Date, Double> profits = new TreeMap<Date, Double>();
+        Date lastDate = null;
+//        SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
+        for (int i = 0; i < yrTrades.getSize(); i++) {
+            Trade trd = yrTrades.getTrade(i);
+
+            if ((i > 0 && i % grpShares == 0))//||  i==yrTrades.getSize()-1)
+            {
+//                if(i==yrTrades.getSize()-1)
+//                {
+//                    tl.addTrade(trd);
+//                    profit+=calcProfit(trd.getStartPrice(), trd.getClosePrice(), buy);
+//                }
+                TreeMap<Date, Double> dateprofitTmp = tc.getIntraDayProfit(tl, buy, grpShares, index);
+                for (Date d : dateprofitTmp.keySet()) {
+                    Date dd = profits.lowerKey(d);
+                    if (dd == null) {
+                        midprofit = 0;
+                    } else {
+                        midprofit = profits.get(dd);
+                    }
+                    double prft = dateprofitTmp.get(d);
+                    double prftyr = dateprofitTmp.get(d);
+//                    if(yearly)
+//                        System.out.println(d+ "," + prft + "," + dateprofit.get(d));
+//                    SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
+//                    if(d.after(sdf.parse("1/1/2006")) && d.before(sdf.parse("1/1/2007")))
+//                        System.out.println(d+ "," + prft + "," + dateprofit.get(d));
+                    if (dateprofit.containsKey(d)) {
+                        prft += dateprofit.get(d);
+                        prftyr += dateprofitYr.get(d);
+                    } else {
+                        prftyr += midprofit;
+                    }
+                    dateprofit.put(d, prft);
+                    dateprofitYr.put(d, prftyr);
+                }
+//                if(yearly)
+//                    System.out.println();
+                tl = new TradeList();
+                //midprofit=profit;
+                profits.put(lastDate, profit);
+            }
+            tl.addTrade(trd);
+            if (i == yrTrades.getSize() - 1)//i==0 && grpShares==1)
+            {
+                TreeMap<Date, Double> dateprofitTmp = tc.getIntraDayProfit(tl, buy, grpShares, index);
+                for (Date d : dateprofitTmp.keySet()) {
+                    Date dd = profits.lowerKey(d);
+                    if (dd == null) {
+                        midprofit = 0;
+                    } else {
+                        midprofit = profits.get(dd);
+                    }
+                    double prft = dateprofitTmp.get(d);
+                    double prftyr = dateprofitTmp.get(d);
+                    if (dateprofit.containsKey(d)) {
+                        prft += dateprofit.get(d);
+                        prftyr += dateprofitYr.get(d);
+                    } else {
+                        prftyr += midprofit;
+                    }
+                    dateprofit.put(d, prft);
+                    dateprofitYr.put(d, prftyr);
+                }
+                tl = new TradeList();
+                profits.put(lastDate, profit);
+            }
+            if (lastDate == null) {
+                lastDate = trd.getCloseDate();
+            } else if (lastDate.before(trd.getCloseDate())) {
+                lastDate = trd.getCloseDate();
+            }
+            profit += trd.getProfit();//calcProfit(trd.getStartPrice(), trd.getClosePrice(), buy);
+        }
+        double minyr = 0.0;
+        for (Date d : dateprofit.keySet()) {
+            double prft = dateprofit.get(d);
+            double prftyr = dateprofitYr.get(d);
+//            if(yearly)
+//            if(d.after(sdf.parse("1/1/2010")) && d.before(sdf.parse("1/1/2011")))
+//                System.out.println(d+ "," + prftyr/100);
+
+            if (prft < min) {
+                min = prft;
+
+//                if(d.after(sdf.parse("1/1/2006")) && d.before(sdf.parse("1/1/2007")))
+//                    System.out.println(d+ "," + prft/100);
+            }
+            if (prftyr < minyr) {
+                minyr = prftyr;
+            }
+        }
+        ArrayList<Double> ret = new ArrayList<Double>();
+        ret.add(min / 100.0);
+        ret.add(minyr / 100.0);
+        return ret;
+    }
+
+    public TreeMap<Date, ArrayList> getTotalDrawDown(TradeList yrTrades, int buy, int grpShares, ShareList index, TradeCalculator tc) throws Exception {
+        double profit = 0.0;
+        double midprofit = 0.0;
+        TradeList tl = new TradeList();
+        TreeMap<Date, Double> dateprofit = new TreeMap<Date, Double>();
+        //TreeMap<Date,Double> dateprofitYr=new TreeMap<Date, Double>();
+        TreeMap<Date, Double> profits = new TreeMap<Date, Double>();
+        Date lastDate = null;
+        for (int i = 0; i < yrTrades.getSize(); i++) {
+            Trade trd = yrTrades.getTrade(i);
+
+            if ((i > 0 && i % grpShares == 0)) {
+                TreeMap<Date, Double> dateprofitTmp = tc.getIntraDayProfit(tl, buy, grpShares, index);
+                for (Date d : dateprofitTmp.keySet()) {
+                    Date dd = profits.lowerKey(d);
+                    if (dd == null) {
+                        midprofit = 0.0;
+                    } else {
+                        midprofit = profits.get(dd);
+                    }
+                    double prft = dateprofitTmp.get(d);
+                    //double prftyr=dateprofitTmp.get(d);
+                    if (dateprofit.containsKey(d)) {
+                        prft += dateprofit.get(d);
+                        //prftyr+=dateprofitYr.get(d);
+                    } else {
+                        prft += midprofit;
+                    }
+                    dateprofit.put(d, prft);
+                    //dateprofitYr.put(d, prftyr);
+                }
+                tl = new TradeList();
+                profits.put(lastDate, profit);
+            }
+            tl.addTrade(trd);
+            if (i == yrTrades.getSize() - 1) {
+                TreeMap<Date, Double> dateprofitTmp = tc.getIntraDayProfit(tl, buy, grpShares, index);
+                for (Date d : dateprofitTmp.keySet()) {
+                    Date dd = profits.lowerKey(d);
+                    if (dd == null) {
+                        midprofit = 0.0;
+                    } else {
+                        midprofit = profits.get(dd);
+                    }
+                    double prft = dateprofitTmp.get(d);
+                    //double prftyr=dateprofitTmp.get(d);
+                    if (dateprofit.containsKey(d)) {
+                        prft += dateprofit.get(d);
+                        //prftyr+=dateprofitYr.get(d);
+                    } else {
+                        prft += midprofit;
+                    }
+                    dateprofit.put(d, prft);
+                    //dateprofitYr.put(d, prftyr);
+                }
+                tl = new TradeList();
+                profits.put(lastDate, profit);
+                dateprofitTmp.clear();
+            }
+            if (lastDate == null) {
+                lastDate = trd.getCloseDate();
+            } else if (lastDate.before(trd.getCloseDate())) {
+                lastDate = trd.getCloseDate();
+            }
+            profit += trd.getProfit();
+        }
+        profits.clear();
+        TreeMap<Date, ArrayList> ret = new TreeMap<Date, ArrayList>();
+        double high = 0.0, low = 0.0;
+        Date lowDate = new Date();
+        Date highDate = new Date();
+        for (Date d : dateprofit.keySet()) {
+            double prft = dateprofit.get(d);
+            //System.out.println(d+","+prft);
+            if (prft > high) {
+                //get lowest
+                if (low != high) {
+                    ArrayList li = new ArrayList();
+                    double dif = (high - low) / 100;
+                    if (dif > 3.0) {
+                        li.add(dif * -1);
+                        int dDff = index.isDatePresent(lowDate) - index.isDatePresent(highDate);
+                        li.add(dDff);
+                        li.add(highDate);
+                        ret.put(lowDate, li);
+                    }
+                    //System.out.println(lowDate +","+ (high-low) + "," + dDff);
+                }
+                high = prft;
+                highDate = d;
+                low = high;
+
+            }
+            if (prft < low) {
+                low = prft;
+                lowDate = d;
+            }
+        }
+        dateprofit.clear();
+
+        //ret.add(min/100);
+        //ret.add(minyr/100);
+        return ret;
+    }
+
+    /**
+     * @return the drawDown
+     */
+    public ArrayList<Double> getDrawDown() {
+        return drawDown;
+    }
+
+    /**
+     * @return the minOpenCountMidle
+     */
+    public long getMinOpenCountMidle() {
+        return minOpenCountMidle;
+    }
+
+    /**
+     * @return the drawDownTrades
+     */
+    public ArrayList<Double> getDrawDownTrades() {
+        return drawDownTrades;
+    }
+
+    /**
+     * @return the avgOpenCountMidle
+     */
+    public long getAvgOpenCountMidle() {
+        return avgOpenCountMidle;
+    }
+
+    /**
+     * @return the tradeUnit
+     */
+    public double getTradeUnit() {
+        return tradeUnit;
+    }
+
+    /**
+     * @return the grpShares
+     */
+    public int getGrpShares() {
+        return grpShares;
+    }
+
+    /**
+     * @return the totalDrawdown
+     */
+    public TreeMap<Date, ArrayList> getTotalDrawdown() {
+        return totalDrawdown;
+    }
+
+    /**
+     * @return the totalProfits
+     */
+    public TreeMap<Date, Double> getTotalProfits() {
+        return totalProfits;
+    }
+
+    /**
+     * @return the TradeParams
+     */
+    public TradeParameters getTradeParams() {
+        boolean ema = false;
+        int backPeriod = 225;
+        if (absInd instanceof MaIndicator) {
+            ema = true;
+        }
+        if (sl == null) {
+            try {
+                //BasicShareDB bsd=new BasicShareDB();
+                if (share.contains(" ")) {
+                    //String shares[]=share.split(" ");
+                    //int days=Integer.parseInt(shares[3]);
+                    //MA ma = new MA(days, MA.Simple);
+                    //sl= bsd.getShareData(shares[0]+ " "+shares[1] , shares[2],ma,false);
+                    sl = new ShareList(0, share);
+                } else {
+                    BasicShareDB bsd = new BasicShareDB();
+                    sl = bsd.getShareData(share);
+                    bsd.close();
+                }
+                //sl=bsd.getShareData(share);
+                //bsd.close();
+            } catch (Exception ex) {
+                Logger.getLogger(Summary.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        ShareList slCls = sl;
+        if (closeShare != null && share.length() <= closeShare.length() && !share.equals(closeShare.substring(0, share.length()))) {
+            try {
+                BasicShareDB bsd = new BasicShareDB();
+                slCls = bsd.getShareData(closeShare);
+                bsd.close();
+            } catch (Exception ex) {
+                Logger.getLogger(Summary.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return TradeParameters.buildParameter(buy == 1, absInd, clsAbsInd, sl, slCls, opn, opnFilter, cls, consec, sStopLoss, iStopLoss, grpShares > 1, index, grpShares, backPeriod, ema, iClose);
+    }
+
+    /**
+     * @return the consec
+     */
+    public int getConsec() {
+        return consec;
+    }
+
+    /**
+     * @return the shareSL
+     */
+    public double getSStopLoss() {
+        return sStopLoss;
+    }
+
+    /**
+     * @return the indSL
+     */
+    public double getIStopLoss() {
+        return iStopLoss;
+    }
+
+    /**
+     * @return the index
+     */
+    public String getIndex() {
+        return index;
+    }
+
+    /**
+     * @return the multiPercent
+     */
+    public double getMultiPercent() {
+        return multiPercent;
+    }
+
+    /**
+     * @return the trdDayPercent
+     */
+    public double getTrdDayPercent() {
+        return trdDayPercent;
+    }
+
+    /**
+     * @return the iClose
+     */
+    public IndividualClose getiClose() {
+        return iClose;
+    }
+
+    /**
+     * @return the sg
+     */
+    public SystemGrade getSg() {
+        return sg;
+    }
+
+    /**
+     * @param sg the sg to set
+     */
+    public void setSg(SystemGrade sg) {
+        this.sg = sg;
+    }
+
+    /**
+     * @return the sysType
+     */
+    public String getSysType() {
+        return sysType;
+    }
+
+    /**
+     * @param sysType the sysType to set
+     */
+    public void setSysType(String sysType) {
+        this.sysType = sysType;
+    }
+
+    /**
+     * @return the impScore
+     */
+    public int getImpScore() {
+        return impScore;
+    }
+
+    /**
+     * @param impScore the impScore to set
+     */
+    public void setImpScore(int impScore) {
+        this.impScore = impScore;
+    }
+
+    /**
+     * @return the Good Score of System
+     */
+    public int getGoodScore() {
+        int score = goodscore;
+        if (score == 0) {
+            //profit
+            {
+                double val = tProfit / 100.0;
+                if ((buy == 1 && val >= 300) || (buy == 0 && val >= 200)) {
+                    score++;
+                }
+            }
+            //win/loss
+            {
+                double val = gainTrades * 1.0 / lossTrades;
+                if (val >= 3) {
+                    score++;
+                }
+            }
+            //Day %
+            {
+                double val = dayPercent;
+                if ((buy == 1 && val <= 43) || (buy == 0 && val <= 15)) {
+                    score++;
+                }
+            }
+            //Trade Units
+            {
+                double val = tradeUnit;
+                if (val <= 1.35) {
+                    score++;
+                }
+            }
+            //drawdown
+            {
+                if (getDrawDown().size() > 0 && getDrawDownTrades().size() > 0) {
+                    double val = Math.min(Collections.min(getDrawDown()), Collections.min(getDrawDownTrades()));
+                    if (val >= -20) {
+                        score++;
+                    }
+                }
+            }
+            //Graph Grade
+            {
+                int val = getYearlyGrade();
+                if ((buy == 1 && val >= 12) || (buy == 0 && val >= 9)) {
+                    score++;
+                }
+            }
+            //Graph Trend
+            {
+                double val = getYearlyGradePerc();
+                if ((buy == 1 && val <= 43)) {// || (buy == 0 && val >= 5 && val <= 30)) {
+                    score++;
+                }
+
+            } //Grade
+            {
+                if (getSg() != null) {
+                    if ((buy == 1 && getSg().isGoodStrict(4)) || buy == 0 && getSg().isGoodStrict(3)) {
+                        score++;
+                    }
+                }
+            } //01-02 profit
+            {
+                double val = getFlatProfit() / 100;
+                if ((buy == 1 && val >= 10) || (buy == 0 && val >= 50)) {
+                    score++;
+                }
+
+            } //-ve grade
+            {
+                int val = getFlatGrade();
+                if ((buy == 1 && val >= 2) || (buy == 0 && val >= 3)) {
+                    score++;
+                }
+            }//+ve grade
+            {
+                int val = getPositiveGrade();
+                if ((buy == 1 && val >= 12) || (buy == 0 && val >= 6)) {
+                    score++;
+                }
+            }
+            {
+                double val = getNewHighDays();
+                if (val < 3.5) {
+                    score++;
+                }
+            }
+            goodscore = score;
+        } /*else {
+        score = goodscore;
+        }*/
+        return score;
+    }
+
+    public double getNewHighDays() {
+        int max = newHighDays;
+        if (max == 0) {
+            TreeMap<Date, Double> eq = new TreeMap<Date, Double>();
+            for (Date d : totalProfits.keySet()) {
+                double old = 0.0;
+                if (eq.containsKey(d)) {
+                    old = eq.get(d);
+                } else if (eq.lowerKey(d) != null) {
+                    old = eq.lowerEntry(d).getValue();
+                }
+                eq.put(d, totalProfits.get(d) + old);
+            }
+            double high = 0;
+            Date old = eq.firstKey();
+            for (Date d : eq.keySet()) {
+                if (eq.get(d) > high) {
+                    high = eq.get(d);
+                    int dif = (int) ((d.getTime() - old.getTime()) / (1000 * 60 * 60 * 24));
+                    if (dif > max) {
+                        max = dif;
+                    }
+                    old = d;
+                }
+            }
+            if (old.before(eq.lastKey())) {
+                int dif = (int) ((eq.lastKey().getTime() - old.getTime()) / (1000 * 60 * 60 * 24));
+                if (dif > max) {
+                    max = dif;
+                }
+            }
+        }
+        return max * 1.0 / 365.0;
+    }
+}

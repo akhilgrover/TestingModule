@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/BackTestModule/!svn/ver/2/trunk/src/Summary/SummaryFilter
+END
+DataSourceFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryFilter/DataSourceFilter.java
+END
+SummaryFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryFilter/SummaryFilter.java
+END
+StringComparitor.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/BackTestModule/!svn/ver/2/trunk/src/Summary/SummaryFilter/StringComparitor.java
+END
+BasicFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryFilter/BasicFilter.java
+END
+TradeLengthFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryFilter/TradeLengthFilter.java
+END
+GraphGradeFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryFilter/GraphGradeFilter.java
+END
+DrawDownFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryFilter/DrawDownFilter.java
+END
+ImprovementFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryFilter/ImprovementFilter.java
+END
+DayCountFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/BackTestModule/!svn/ver/2/trunk/src/Summary/SummaryFilter/DayCountFilter.java
+END
+TotalProfitFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/BackTestModule/!svn/ver/12/trunk/src/Summary/SummaryFilter/TotalProfitFilter.java
+END
+MinYearProfitFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/BackTestModule/!svn/ver/2/trunk/src/Summary/SummaryFilter/MinYearProfitFilter.java
+END
+TradeCountFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/BackTestModule/!svn/ver/2/trunk/src/Summary/SummaryFilter/TradeCountFilter.java
+END

@@ -1,0 +1,37 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package Summary.SummaryFilter;
+
+import java.util.HashMap;
+import report.Summary;
+
+/**
+ *
+ * @author admin
+ */
+public class TradeCountFilter extends BasicFilter {
+
+    public TradeCountFilter() {
+        super();
+        params.put(1, 0);
+        params.put(2, 999);
+    }
+    
+    public TradeCountFilter(HashMap params) {
+        super(params);
+    }
+
+
+    @Override
+    boolean isValid(Summary sum) {
+        int trdStart=(Integer)params.get(1);
+        int trdEnd=(Integer)params.get(2);
+        int tcount=sum.getTCount();
+        boolean b=(tcount>=trdStart && tcount<=trdEnd);
+        return b;
+    }
+
+}

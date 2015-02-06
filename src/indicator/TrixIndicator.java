@@ -1,0 +1,91 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package indicator;
+
+import Share.ShareData;
+import Share.ShareList;
+import java.util.HashMap;
+import java.util.Iterator;
+import ma.MA;
+
+/**
+ *
+ * @author admin
+ */
+public class TrixIndicator  extends AbstractIndicator{
+
+    
+    @Override
+    public void init() {
+        this.name="Trix";
+        this.paramCount=2;
+        this.params=new HashMap();
+        params.put(1,26);
+        params.put(2,9);
+    }
+
+    @Override
+    public void init(HashMap param) {
+        this.params=param;
+        this.name="Trix";
+        this.paramCount=2;
+    }
+    /*
+    public void init(int period1,int period2) {
+        this.period=period1;
+        this.signal=period2;
+        this.name="Trix";
+        this.params=2;
+    }*/
+
+    @Override
+    public IndicatorList buildIndicator(ShareList sl) 
+    {
+        int param1=(Integer)params.get(1);
+        int signal=(Integer)params.get(2);
+        IndicatorList lTrix=new IndicatorList(sl.getSize());
+        MA ma1 = new MA(param1, MA.Exponential);
+	MA ma2 = new MA(param1, MA.Exponential);
+	MA ma3 = new MA(param1, MA.Exponential);
+	MA sma = new MA(signal, MA.Exponential);
+        double close=0,ema1,ema2,ema3,lema3=-1,trix,sig;
+        Iterator itr=sl.getIterator();
+        for (int i=0; i<sl.getSize(); i++)
+	{
+            ShareData sd=(ShareData) itr.next();
+            close=sd.getClosePrice();
+            ema1=ma1.next(close);
+            ema2=ma2.next(ema1);
+            ema3=ma3.next(ema2);
+            if(lema3==-1)
+                lema3=ema3;
+            trix=((ema3-lema3)/lema3)*100;
+            sig=sma.next(trix);
+            lema3=ema3;
+            IndicatorField indf=new IndicatorField(sd.getDate(),trix,sig);
+            lTrix.addIndField(indf);
+        }
+        return lTrix;
+    }
+    
+    @Override
+	public String toString()
+	{
+            int param1=(Integer)params.get(1);
+            int signal=(Integer)params.get(2);
+            StringBuilder buffer = new StringBuilder();
+            buffer.append(name);
+            buffer.append(" ");
+            buffer.append(param1);
+            buffer.append(" Period ");
+            buffer.append(" ");
+            buffer.append(signal);
+            buffer.append(" d signal ");
+
+            return buffer.toString();
+	}
+
+}
