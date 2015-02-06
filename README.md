@@ -1,2 +1,0 @@
-# TestingModule
-Share Trade Modules
